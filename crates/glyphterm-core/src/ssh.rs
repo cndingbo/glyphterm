@@ -62,7 +62,7 @@ impl SshBackend {
         channel.shell().context("ssh shell")?;
 
         let (out_tx, pty_rx) = mpsc::channel();
-        let (stdin_tx, stdin_rx) = std::sync::mpsc::channel();
+        let (stdin_tx, stdin_rx) = std::sync::mpsc::channel::<Vec<u8>>();
         let (resize_tx, resize_rx) = std::sync::mpsc::channel();
 
         thread::spawn(move || {

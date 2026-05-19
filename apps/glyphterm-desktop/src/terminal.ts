@@ -24,6 +24,11 @@ export interface Frame {
   selection?: SelectionView;
 }
 
+export interface FramePayload {
+  tabId: number;
+  frame: Frame;
+}
+
 const FONT =
   '14px "Sarasa Mono SC", "PingFang SC", "Noto Sans Mono CJK SC", monospace';
 

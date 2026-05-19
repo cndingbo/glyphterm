@@ -75,6 +75,8 @@ cargo run -p glyphterm-cli
 cd apps/glyphterm-desktop
 npm install
 npm run tauri dev
+
+# 快捷键：⌘T 新本地标签 · ⌘⇧N SSH · ⌘C 复制选区 · ⌘V 粘贴
 ```
 
 ### 仓库结构（当前）
@@ -98,8 +100,8 @@ npm run tauri dev
 2. **M1** — `glyphgrid` + `glyphvt` + `glyphterm-cli` ✅  
 3. **M2** — Tauri 桌面应用 + `glyphterm-core` + 滚动缓冲区 ✅  
 4. **M2.1** — 256/真彩色、选区复制、字体提示 ✅  
-5. **M2.2** — GPU 渲染、性能优化  
-6. **M3** — 分屏 / Tab / SSH  
+5. **M3.1** — 多标签 + SSH 远程会话 ✅  
+6. **M3.2** — 分屏 Block 布局、主机配置持久化  
 7. **M4** — 文件预览、远程编辑、AI 块  
 
 详见 [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) 与 [docs/CJK-RENDERING.md](./docs/CJK-RENDERING.md)。

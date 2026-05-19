@@ -1,35 +1,108 @@
-use glyphterm_core::TerminalSession;
+use glyphterm_core::{FramePayload, SessionManager, TabInfo};
 use parking_lot::Mutex;
 use std::time::Duration;
 use tauri::{AppHandle, Emitter, Manager, State};
 
 struct AppState {
-    session: Mutex<Option<TerminalSession>>,
+    manager: Mutex<SessionManager>,
+}
+
+fn resolve_tab(state: &State<'_, AppState>, tab_id: Option<u64>) -> Result<u64, String> {
+    let mgr = state.manager.lock();
+    let id = tab_id.unwrap_or(mgr.active_id());
+    if id == 0 || !mgr.list_tabs().iter().any(|t| t.id == id) {
+        return Err("no active tab".into());
+    }
+    Ok(id)
 }
 
 #[tauri::command]
-fn terminal_start(state: State<'_, AppState>, cols: u16, rows: u16) -> Result<(), String> {
-    let session = TerminalSession::spawn(cols, rows).map_err(|e| e.to_string())?;
-    *state.session.lock() = Some(session);
-    Ok(())
-}
-
-#[tauri::command]
-fn terminal_write(state: State<'_, AppState>, data: String) -> Result<(), String> {
-    let mut guard = state.session.lock();
-    let session = guard.as_mut().ok_or("terminal not started")?;
-    session
-        .write_input(data.as_bytes())
+fn terminal_tab_new_local(
+    state: State<'_, AppState>,
+    cols: u16,
+    rows: u16,
+) -> Result<u64, String> {
+    let id = state
+        .manager
+        .lock()
+        .create_local(cols, rows)
         .map_err(|e| e.to_string())?;
-    Ok(())
+    Ok(id)
 }
 
 #[tauri::command]
-fn terminal_resize(state: State<'_, AppState>, cols: u16, rows: u16) -> Result<(), String> {
-    let mut guard = state.session.lock();
-    let session = guard.as_mut().ok_or("terminal not started")?;
-    session.resize(cols, rows).map_err(|e| e.to_string())?;
-    Ok(())
+fn terminal_tab_new_ssh(
+    state: State<'_, AppState>,
+    host: String,
+    user: String,
+    port: Option<u16>,
+    password: Option<String>,
+    cols: u16,
+    rows: u16,
+) -> Result<u64, String> {
+    let port = port.unwrap_or(22);
+    let pw = password.as_deref();
+    state
+        .manager
+        .lock()
+        .create_ssh(&host, port, &user, pw, cols, rows)
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn terminal_tab_close(state: State<'_, AppState>, tab_id: u64) -> Result<(), String> {
+    state
+        .manager
+        .lock()
+        .close(tab_id)
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn terminal_tab_switch(state: State<'_, AppState>, tab_id: u64) -> Result<(), String> {
+    state
+        .manager
+        .lock()
+        .set_active(tab_id)
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn terminal_list_tabs(state: State<'_, AppState>) -> Result<Vec<TabInfo>, String> {
+    Ok(state.manager.lock().list_tabs())
+}
+
+#[tauri::command]
+fn terminal_write(
+    state: State<'_, AppState>,
+    data: String,
+    tab_id: Option<u64>,
+) -> Result<(), String> {
+    let id = resolve_tab(&state, tab_id)?;
+    state
+        .manager
+        .lock()
+        .session_mut(id)
+        .map_err(|e| e.to_string())?
+        .write_input(data.as_bytes())
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn terminal_resize(
+    state: State<'_, AppState>,
+    cols: u16,
+    rows: u16,
+    tab_id: Option<u64>,
+) -> Result<(), String> {
+    let id = resolve_tab(&state, tab_id)?;
+    state
+        .manager
+        .lock()
+        .session_mut(id)
+        .map_err(|e| e.to_string())?
+        .resize(cols, rows)
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -37,10 +110,15 @@ fn terminal_selection_start(
     state: State<'_, AppState>,
     col: u16,
     row: u16,
+    tab_id: Option<u64>,
 ) -> Result<(), String> {
-    let mut guard = state.session.lock();
-    let session = guard.as_mut().ok_or("terminal not started")?;
-    session.selection_start(col, row);
+    let id = resolve_tab(&state, tab_id)?;
+    state
+        .manager
+        .lock()
+        .session_mut(id)
+        .map_err(|e| e.to_string())?
+        .selection_start(col, row);
     Ok(())
 }
 
@@ -49,43 +127,61 @@ fn terminal_selection_update(
     state: State<'_, AppState>,
     col: u16,
     row: u16,
+    tab_id: Option<u64>,
 ) -> Result<(), String> {
-    let mut guard = state.session.lock();
-    let session = guard.as_mut().ok_or("terminal not started")?;
-    session.selection_update(col, row);
+    let id = resolve_tab(&state, tab_id)?;
+    state
+        .manager
+        .lock()
+        .session_mut(id)
+        .map_err(|e| e.to_string())?
+        .selection_update(col, row);
     Ok(())
 }
 
 #[tauri::command]
-fn terminal_selection_clear(state: State<'_, AppState>) -> Result<(), String> {
-    let mut guard = state.session.lock();
-    let session = guard.as_mut().ok_or("terminal not started")?;
-    session.selection_clear();
+fn terminal_selection_clear(
+    state: State<'_, AppState>,
+    tab_id: Option<u64>,
+) -> Result<(), String> {
+    let id = resolve_tab(&state, tab_id)?;
+    state
+        .manager
+        .lock()
+        .session_mut(id)
+        .map_err(|e| e.to_string())?
+        .selection_clear();
     Ok(())
 }
 
 #[tauri::command]
-fn terminal_copy_selection(state: State<'_, AppState>) -> Result<String, String> {
-    let guard = state.session.lock();
-    let session = guard.as_ref().ok_or("terminal not started")?;
-    Ok(session.selection_copy_text())
+fn terminal_copy_selection(
+    state: State<'_, AppState>,
+    tab_id: Option<u64>,
+) -> Result<String, String> {
+    let id = resolve_tab(&state, tab_id)?;
+    Ok(state
+        .manager
+        .lock()
+        .session_mut(id)
+        .map_err(|e| e.to_string())?
+        .selection_copy_text())
 }
 
 fn spawn_frame_loop(app: AppHandle) {
     std::thread::spawn(move || {
         loop {
             std::thread::sleep(Duration::from_millis(16));
-            let state = app.state::<AppState>();
-            let mut guard = state.session.lock();
-            let Some(session) = guard.as_mut() else {
-                continue;
+            let payloads: Vec<FramePayload> = {
+                let state = app.state::<AppState>();
+                let mut mgr = state.manager.lock();
+                mgr.drain_dirty_frames()
+                    .into_iter()
+                    .map(|(tab_id, frame)| FramePayload { tab_id, frame })
+                    .collect()
             };
-            session.poll();
-            if session.is_dirty() {
-                let frame = session.frame();
-                session.clear_dirty();
-                drop(guard);
-                let _ = app.emit("terminal-frame", &frame);
+            for payload in payloads {
+                let _ = app.emit("terminal-frame", &payload);
             }
         }
     });
@@ -95,14 +191,18 @@ fn spawn_frame_loop(app: AppHandle) {
 pub fn run() {
     tauri::Builder::default()
         .manage(AppState {
-            session: Mutex::new(None),
+            manager: Mutex::new(SessionManager::new()),
         })
         .setup(|app| {
             spawn_frame_loop(app.handle().clone());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            terminal_start,
+            terminal_tab_new_local,
+            terminal_tab_new_ssh,
+            terminal_tab_close,
+            terminal_tab_switch,
+            terminal_list_tabs,
             terminal_write,
             terminal_resize,
             terminal_selection_start,

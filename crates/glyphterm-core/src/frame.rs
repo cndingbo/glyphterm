@@ -13,6 +13,13 @@ pub struct SelectionView {
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
+pub struct FramePayload {
+    pub tab_id: u64,
+    pub frame: Frame,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Frame {
     pub cols: u16,
     pub rows: u16,

@@ -21,7 +21,7 @@ fn main() -> Result<()> {
     terminal::enable_raw_mode()?;
     execute!(std::io::stdout(), EnterAlternateScreen, Hide)?;
 
-    let mut session = TerminalSession::spawn(cols, rows)?;
+    let mut session = TerminalSession::spawn_local(cols, rows)?;
 
     let mut running = true;
     while running {

@@ -1,141 +1,127 @@
-//! Local PTY session backed by [`glyphgrid`] + [`glyphvt`].
+//! Unified terminal session (local PTY or SSH).
 
 use crate::frame::{CellView, Frame, SelectionView};
-use anyhow::{Context, Result};
-use glyphgrid::Grid;
-use glyphvt::{apply, Parser};
-use glyphwidth::WidthPolicy;
-use portable_pty::{native_pty_system, CommandBuilder, MasterPty, PtySize};
-use std::io::{Read, Write};
-use std::sync::mpsc::{self, Receiver};
-use std::thread;
+use crate::local::LocalBackend;
+use crate::ssh::SshBackend;
+use anyhow::Result;
+
+pub enum SessionBackend {
+    Local(LocalBackend),
+    Ssh(SshBackend),
+}
 
 pub struct TerminalSession {
-    grid: Grid,
-    parser: Parser,
-    writer: Box<dyn Write + Send>,
-    master: Box<dyn MasterPty + Send>,
-    pty_rx: Receiver<Vec<u8>>,
-    dirty: bool,
+    backend: SessionBackend,
+    pub title: String,
 }
 
 impl TerminalSession {
-    pub fn spawn(cols: u16, rows: u16) -> Result<Self> {
-        let policy = WidthPolicy::default();
-        let grid = Grid::new(cols, rows, policy);
-
-        let pty_system = native_pty_system();
-        let pair = pty_system
-            .openpty(PtySize {
-                rows,
-                cols,
-                pixel_width: 0,
-                pixel_height: 0,
-            })
-            .context("open pty")?;
-
-        let shell = std::env::var("SHELL").unwrap_or_else(|_| default_shell());
-        let cmd = CommandBuilder::new(&shell);
-        let _child = pair.slave.spawn_command(cmd).context("spawn shell")?;
-
-        let mut reader = pair.master.try_clone_reader().context("clone pty reader")?;
-        let writer = pair.master.take_writer().context("pty writer")?;
-        let master: Box<dyn MasterPty + Send> = pair.master;
-
-        let (tx, pty_rx) = mpsc::channel();
-        thread::spawn(move || {
-            let mut buf = [0u8; 8192];
-            loop {
-                match reader.read(&mut buf) {
-                    Ok(0) => break,
-                    Ok(n) => {
-                        if tx.send(buf[..n].to_vec()).is_err() {
-                            break;
-                        }
-                    }
-                    Err(_) => break,
-                }
-            }
-        });
-
+    pub fn spawn_local(cols: u16, rows: u16) -> Result<Self> {
         Ok(Self {
-            grid,
-            parser: Parser::new(),
-            writer,
-            master,
-            pty_rx,
-            dirty: true,
+            title: "local".into(),
+            backend: SessionBackend::Local(LocalBackend::spawn(cols, rows)?),
         })
     }
 
-    /// Drain PTY output into the grid. Returns whether the grid changed.
+    pub fn spawn_ssh(
+        host: &str,
+        port: u16,
+        user: &str,
+        password: Option<&str>,
+        cols: u16,
+        rows: u16,
+    ) -> Result<Self> {
+        let ssh = SshBackend::connect(host, port, user, password, cols, rows)?;
+        let title = ssh.label.clone();
+        Ok(Self {
+            title,
+            backend: SessionBackend::Ssh(ssh),
+        })
+    }
+
+    pub fn is_ssh(&self) -> bool {
+        matches!(self.backend, SessionBackend::Ssh(_))
+    }
+
+    fn grid_mut(&mut self) -> &mut glyphgrid::Grid {
+        match &mut self.backend {
+            SessionBackend::Local(b) => &mut b.grid,
+            SessionBackend::Ssh(b) => &mut b.grid,
+        }
+    }
+
+    fn grid(&self) -> &glyphgrid::Grid {
+        match &self.backend {
+            SessionBackend::Local(b) => &b.grid,
+            SessionBackend::Ssh(b) => &b.grid,
+        }
+    }
+
     pub fn poll(&mut self) -> bool {
-        let mut changed = false;
-        while let Ok(chunk) = self.pty_rx.try_recv() {
-            let actions = self.parser.feed(&chunk);
-            if !actions.is_empty() {
-                apply(&mut self.grid, &actions);
-                changed = true;
-            }
+        match &mut self.backend {
+            SessionBackend::Local(b) => b.poll(),
+            SessionBackend::Ssh(b) => b.poll(),
         }
-        if changed {
-            self.dirty = true;
-        }
-        changed
     }
 
     pub fn is_dirty(&self) -> bool {
-        self.dirty
+        match &self.backend {
+            SessionBackend::Local(b) => b.dirty,
+            SessionBackend::Ssh(b) => b.dirty,
+        }
     }
 
     pub fn clear_dirty(&mut self) {
-        self.dirty = false;
+        match &mut self.backend {
+            SessionBackend::Local(b) => b.dirty = false,
+            SessionBackend::Ssh(b) => b.dirty = false,
+        }
     }
 
     pub fn write_input(&mut self, data: &[u8]) -> Result<()> {
-        self.grid.selection_clear();
-        self.writer.write_all(data).context("write pty")?;
-        self.writer.flush().context("flush pty")?;
-        self.dirty = true;
-        Ok(())
+        self.grid_mut().selection_clear();
+        match &mut self.backend {
+            SessionBackend::Local(b) => b.write_input(data),
+            SessionBackend::Ssh(b) => b.write_input(data),
+        }
     }
 
     pub fn selection_start(&mut self, col: u16, row: u16) {
-        self.grid.selection_start(col, row);
-        self.dirty = true;
+        self.grid_mut().selection_start(col, row);
+        self.mark_dirty();
     }
 
     pub fn selection_update(&mut self, col: u16, row: u16) {
-        self.grid.selection_update(col, row);
-        self.dirty = true;
+        self.grid_mut().selection_update(col, row);
+        self.mark_dirty();
     }
 
     pub fn selection_clear(&mut self) {
-        self.grid.selection_clear();
-        self.dirty = true;
+        self.grid_mut().selection_clear();
+        self.mark_dirty();
     }
 
     pub fn selection_copy_text(&self) -> String {
-        self.grid.selection_text()
+        self.grid().selection_text()
     }
 
     pub fn resize(&mut self, cols: u16, rows: u16) -> Result<()> {
-        self.master
-            .resize(PtySize {
-                rows,
-                cols,
-                pixel_width: 0,
-                pixel_height: 0,
-            })
-            .context("resize pty")?;
-        self.grid.resize(cols, rows);
-        self.dirty = true;
-        Ok(())
+        match &mut self.backend {
+            SessionBackend::Local(b) => b.resize(cols, rows),
+            SessionBackend::Ssh(b) => b.resize(cols, rows),
+        }
+    }
+
+    fn mark_dirty(&mut self) {
+        match &mut self.backend {
+            SessionBackend::Local(b) => b.dirty = true,
+            SessionBackend::Ssh(b) => b.dirty = true,
+        }
     }
 
     pub fn frame(&self) -> Frame {
-        let cells = self
-            .grid
+        let grid = self.grid();
+        let cells = grid
             .iter_cells()
             .map(|c| CellView {
                 ch: if c.wide_continuation {
@@ -151,7 +137,7 @@ impl TerminalSession {
             .collect();
 
         let selection = {
-            let sel = self.grid.selection();
+            let sel = grid.selection();
             if sel.active {
                 let (c0, r0, c1, r1) = sel.bounds();
                 Some(SelectionView {
@@ -166,23 +152,13 @@ impl TerminalSession {
         };
 
         Frame {
-            cols: self.grid.cols,
-            rows: self.grid.rows,
-            cursor_col: self.grid.cursor.col,
-            cursor_row: self.grid.cursor.row,
-            scrollback_lines: self.grid.scrollback_len(),
+            cols: grid.cols,
+            rows: grid.rows,
+            cursor_col: grid.cursor.col,
+            cursor_row: grid.cursor.row,
+            scrollback_lines: grid.scrollback_len(),
             cells,
             selection,
         }
     }
-}
-
-#[cfg(target_os = "windows")]
-fn default_shell() -> String {
-    "powershell.exe".into()
-}
-
-#[cfg(not(target_os = "windows"))]
-fn default_shell() -> String {
-    "/bin/zsh".into()
 }

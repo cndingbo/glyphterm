@@ -44,6 +44,68 @@ body {
 .titlebar .hint {
   font-size: 12px;
   opacity: 0.5;
+  flex: 1;
+}
+
+.titlebar-actions {
+  display: flex;
+  gap: 8px;
+  -webkit-app-region: no-drag;
+}
+
+.btn-sm {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--fg);
+  cursor: pointer;
+}
+
+.btn-sm:hover {
+  background: rgba(110, 231, 209, 0.15);
+  border-color: rgba(110, 231, 209, 0.35);
+}
+
+.tab-bar {
+  display: flex;
+  gap: 2px;
+  padding: 4px 8px 0;
+  background: var(--titlebar);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  overflow-x: auto;
+  -webkit-app-region: no-drag;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  border: none;
+  border-radius: 6px 6px 0 0;
+  background: transparent;
+  color: var(--text-secondary, rgba(245, 243, 238, 0.6));
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.tab.active {
+  background: var(--bg);
+  color: var(--fg);
+}
+
+.tab-close {
+  opacity: 0.5;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.tab-close:hover {
+  opacity: 1;
+  color: #f14c4c;
 }
 
 .font-banner {

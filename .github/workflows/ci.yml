@@ -36,3 +36,5 @@ jobs:
 
       - name: Build Tauri backend
         run: cargo build -p glyphterm-desktop --manifest-path apps/glyphterm-desktop/src-tauri/Cargo.toml
+
+      # libssh2-sys vendored build can take a few minutes on first CI run

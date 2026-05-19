@@ -129,6 +129,10 @@
   border-top: 1px solid var(--border);
 }
 
+.quick-open-item.workspace-row .quick-open-name {
+  color: var(--accent);
+}
+
 .quick-open-section {
   padding: 8px 12px 4px;
   font-size: 10px;

@@ -1,21 +1,22 @@
 import { searchFiles, type FsSearchHit } from "../fs/client";
 import { t } from "../i18n";
-import {
-  listRecentFiles,
-  type RecentFileEntry,
-} from "../workspace/recent-files";
+import { fileName } from "../fs/client";
+import { listRecentFiles, listRecentWorkspaces } from "../workspace/recent-files";
 import { iconFile } from "./icons";
 
 type OpenHandler = (path: string) => void | Promise<void>;
+type WorkspaceHandler = (root: string) => void | Promise<void>;
 
 type QuickOpenRow =
   | { kind: "header"; label: string }
-  | { kind: "file"; path: string; name: string; sub: string };
+  | { kind: "file"; path: string; name: string; sub: string }
+  | { kind: "workspace"; path: string; name: string; sub: string };
 
 let overlay: HTMLElement | null = null;
 let input: HTMLInputElement | null = null;
 let listEl: HTMLElement | null = null;
 let onOpen: OpenHandler | null = null;
+let onOpenWorkspace: WorkspaceHandler | null = null;
 let rows: QuickOpenRow[] = [];
 let activeIndex = 0;
 let visible = false;
@@ -86,11 +87,22 @@ function scheduleSearch() {
 }
 
 function recentRows(): QuickOpenRow[] {
+  const out: QuickOpenRow[] = [];
+  const workspaces = listRecentWorkspaces();
+  if (workspaces.length) {
+    out.push({ kind: "header", label: t("quickOpen.recentWorkspaces") });
+    for (const w of workspaces.slice(0, 6)) {
+      out.push({
+        kind: "workspace",
+        path: w,
+        name: fileName(w) || w,
+        sub: w,
+      });
+    }
+  }
   const recent = listRecentFiles();
-  if (!recent.length) return [];
-  const out: QuickOpenRow[] = [
-    { kind: "header", label: t("quickOpen.recent") },
-  ];
+  if (!recent.length) return out;
+  out.push({ kind: "header", label: t("quickOpen.recent") });
   for (const e of recent.slice(0, 12)) {
     out.push({
       kind: "file",
@@ -164,11 +176,11 @@ function renderList() {
       return;
     }
     const li = document.createElement("li");
-    li.className = `quick-open-item${i === activeIndex ? " active" : ""}`;
+    li.className = `quick-open-item${i === activeIndex ? " active" : ""}${row.kind === "workspace" ? " workspace-row" : ""}`;
     li.innerHTML = `
       <span class="quick-open-icon">${iconFile}</span>
       <span class="quick-open-meta">
-        <span class="quick-open-name">${escapeHtml(row.name)}</span>
+        <span class="quick-open-name">${escapeHtml(row.name)}${row.kind === "workspace" ? ` · ${escapeHtml(t("quickOpen.workspaceTag"))}` : ""}</span>
         <span class="quick-open-path">${escapeHtml(row.sub)}</span>
       </span>`;
     li.addEventListener("mousedown", (ev) => {
@@ -182,13 +194,21 @@ function renderList() {
 
 async function runActive() {
   const row = rows[activeIndex];
-  if (!row || row.kind !== "file" || !onOpen) return;
+  if (!row || row.kind === "header") return;
   close();
-  await onOpen(row.path);
+  if (row.kind === "workspace") {
+    if (onOpenWorkspace) await onOpenWorkspace(row.path);
+    return;
+  }
+  if (onOpen) await onOpen(row.path);
 }
 
 export function setQuickOpenHandler(handler: OpenHandler) {
   onOpen = handler;
+}
+
+export function setQuickOpenWorkspaceHandler(handler: WorkspaceHandler) {
+  onOpenWorkspace = handler;
 }
 
 export function openQuickOpen() {

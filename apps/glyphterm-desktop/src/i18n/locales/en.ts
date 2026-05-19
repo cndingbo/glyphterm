@@ -43,6 +43,29 @@ export const en = {
     showCommands: "Show command palette",
     toggleProblems: "View: Problems panel",
     toggleOutput: "View: Output panel",
+    restartLsp: "Developer: Restart rust-analyzer",
+    demoBashBlock: "Demo: Insert Bash AI block",
+    demoUpdateBlock: "Demo: Insert Update AI block",
+  },
+  lsp: {
+    rustStarted: "LSP: {server} on ws://127.0.0.1:{port}",
+    rustFailed: "LSP failed: {error}",
+    rustStopped: "rust-analyzer stopped",
+  },
+  aiBlock: {
+    bashBadge: "Bash",
+    updateBadge: "Update",
+    bashTitle: "Suggested command",
+    updateTitle: "File updates",
+    run: "Run in terminal",
+    copy: "Copy",
+    updateFileSummary: "Modified",
+    status: {
+      pending: "Ready",
+      running: "Running…",
+      done: "Done",
+      failed: "Failed",
+    },
   },
   quickOpen: {
     label: "Go to file",
@@ -51,6 +74,8 @@ export const en = {
     empty: "No matching files",
     noRecent: "No recent files — open a file from the explorer",
     recent: "Recent",
+    recentWorkspaces: "Recent workspaces",
+    workspaceTag: "workspace",
     results: "Results",
   },
   status: {
@@ -124,6 +149,8 @@ export const en = {
     shortcutSplit: "Drag the gutter between panes to resize",
     shortcutPalette: "Command palette",
     shortcutQuickOpen: "Quick Open — go to file",
+    recentWorkspaces: "Recent workspaces",
+    recentWorkspacesHint: "Or press ⌘P to pick a folder",
   },
   terminal: {
     idlePrompt: "GlyphTerm",

@@ -1,4 +1,5 @@
 mod fs_api;
+mod lsp;
 
 use fs_api::{
     default_workspace_root, list_directory, read_text_file, search_files, write_text_file,
@@ -13,6 +14,7 @@ use tauri::{AppHandle, Emitter, Manager, State};
 struct AppState {
     manager: Mutex<SessionManager>,
     workspace_root: Mutex<PathBuf>,
+    lsp: lsp::LspState,
 }
 
 fn resolve_tab(state: &State<'_, AppState>, tab_id: Option<u64>) -> Result<u64, String> {
@@ -217,6 +219,33 @@ fn fs_search_files(
 }
 
 #[tauri::command]
+fn lsp_rust_start(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    workspace_root: Option<String>,
+) -> Result<lsp::LspStartResult, String> {
+    let root = workspace_root.unwrap_or_else(|| {
+        state
+            .workspace_root
+            .lock()
+            .to_string_lossy()
+            .into_owned()
+    });
+    lsp::start_rust_lsp(&app, &state.lsp, root)
+}
+
+#[tauri::command]
+fn lsp_rust_stop(state: State<'_, AppState>) -> Result<(), String> {
+    lsp::stop_lsp(&state.lsp);
+    Ok(())
+}
+
+#[tauri::command]
+fn lsp_rust_status(state: State<'_, AppState>) -> Result<Option<u16>, String> {
+    Ok(*state.lsp.port.lock())
+}
+
+#[tauri::command]
 fn terminal_copy_selection(
     state: State<'_, AppState>,
     tab_id: Option<u64>,
@@ -256,6 +285,7 @@ pub fn run() {
         .manage(AppState {
             manager: Mutex::new(SessionManager::new()),
             workspace_root: Mutex::new(default_workspace_root()),
+            lsp: lsp::LspState::default(),
         })
         .setup(|app| {
             spawn_frame_loop(app.handle().clone());
@@ -279,6 +309,9 @@ pub fn run() {
             fs_read_text,
             fs_write_text,
             fs_search_files,
+            lsp_rust_start,
+            lsp_rust_stop,
+            lsp_rust_status,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

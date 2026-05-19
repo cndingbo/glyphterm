@@ -7,6 +7,7 @@ import tsWorker from "monaco-editor/esm/vs/language/typescript/ts.worker?worker"
 import { getTheme } from "../themes";
 import { languageIdForPath } from "../fs/client";
 import { applyMonacoThemeFromApp } from "./monaco-theme";
+import { getRustLspClient } from "./rust-lsp-client";
 
 self.MonacoEnvironment = {
   getWorker(_: unknown, label: string) {
@@ -38,6 +39,7 @@ export class MonacoPane {
   private editor: monaco.editor.IStandaloneCodeEditor | null = null;
   private path: string | null = null;
   private dirty = false;
+  private lspChangeTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
     private container: HTMLElement,
@@ -77,6 +79,17 @@ export class MonacoPane {
     this.path = this.opts.path;
     this.editor.onDidChangeModelContent(() => {
       this.dirty = true;
+      if (this.path && languageIdForPath(this.path) === "rust") {
+        if (this.lspChangeTimer) clearTimeout(this.lspChangeTimer);
+        this.lspChangeTimer = setTimeout(() => {
+          if (this.path && this.editor) {
+            getRustLspClient().changeDocument(
+              this.path,
+              this.editor.getValue(),
+            );
+          }
+        }, 280);
+      }
     });
 
     this.container.addEventListener("keydown", (ev) => {
@@ -112,6 +125,9 @@ export class MonacoPane {
       model = monaco.editor.createModel(content, lang, uri);
     }
     this.editor.setModel(model);
+    if (lang === "rust") {
+      getRustLspClient().openDocument(path, content);
+    }
   }
 
   getEditor(): monaco.editor.IStandaloneCodeEditor | null {
@@ -152,6 +168,10 @@ export class MonacoPane {
   }
 
   dispose() {
+    if (this.path && languageIdForPath(this.path) === "rust") {
+      getRustLspClient().closeDocument(this.path);
+    }
+    if (this.lspChangeTimer) clearTimeout(this.lspChangeTimer);
     this.editor?.dispose();
     this.editor = null;
   }

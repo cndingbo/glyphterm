@@ -12,6 +12,11 @@ import {
 import { pickWorkspaceFolder } from "../fs/workspace-dialog";
 import { problemCounts, subscribeDiagnostics } from "../editor/diagnostics";
 import { languageLabelForPath } from "../editor/language-service";
+import { getRustLspClient } from "../editor/rust-lsp-client";
+import {
+  createDemoBashBlock,
+  createDemoUpdateBlock,
+} from "../terminal/ai-blocks";
 import { applyMonacoThemeFromApp } from "../editor/monaco-theme";
 import {
   onLocaleChange,
@@ -30,6 +35,7 @@ import {
   openQuickOpen,
   refreshQuickOpenUi,
   setQuickOpenHandler,
+  setQuickOpenWorkspaceHandler,
 } from "../ui/quick-open";
 import { createBottomPanel, type BottomPanelController } from "../ui/bottom-panel";
 import { appendOutput, bootstrapOutputLog } from "../ui/output-log";
@@ -144,7 +150,14 @@ export async function bootWorkspace() {
     bottomPanel?.refresh();
   });
   setQuickOpenHandler((path) => openFileInEditor(path));
+  setQuickOpenWorkspaceHandler((root) => void applyWorkspaceRootFromPicker(root));
   await initWorkspaceRoot();
+  void ensureRustLsp();
+
+  window.addEventListener("glyphterm-open-workspace", (ev) => {
+    const root = (ev as CustomEvent<{ root: string }>).detail?.root;
+    if (root) void applyWorkspaceRootFromPicker(root);
+  });
 
   document.getElementById("btn-ws-tab-add")?.addEventListener("click", () => {
     const n = state.tabs.length + 1;
@@ -254,7 +267,22 @@ export async function bootWorkspace() {
     });
   }
 
+  async function ensureRustLsp() {
+    if (!workspaceRootPath) return;
+    await getRustLspClient().ensureStarted(workspaceRootPath);
+  }
+
+  async function applyWorkspaceRootFromPicker(root: string) {
+    try {
+      const canon = await setWorkspaceRoot(root);
+      await applyWorkspaceRoot(canon);
+    } catch (e) {
+      alert(String(e));
+    }
+  }
+
   async function applyWorkspaceRoot(root: string) {
+    await getRustLspClient().stop();
     workspaceRootPath = root;
     recordRecentWorkspace(root);
     workspacePathEl.textContent = root;
@@ -265,6 +293,7 @@ export async function bootWorkspace() {
     state.activity = "files";
     state.sidePanelOpen = true;
     persistAndRender();
+    void ensureRustLsp();
   }
 
   async function changeWorkspaceFolder() {
@@ -448,7 +477,9 @@ export async function bootWorkspace() {
 
   async function mountBlock(rt: PaneRuntime, block: Block) {
     if (block.kind === "terminal") {
-      const tv = new TerminalBlockView(rt.el);
+      const tv = new TerminalBlockView(rt.el, {
+        onOpenFile: (path) => void openFileInEditor(path),
+      });
       rt.terminal = tv;
       let tabId = block.tabId;
       if (!tabId) {
@@ -646,6 +677,27 @@ export async function bootWorkspace() {
     }
   }
 
+  function injectDemoBashBlock() {
+    const tab = activeTab(state);
+    const pane = tab.layout.panes.find((p) => p.block.kind === "terminal");
+    if (!pane) return;
+    tab.activePaneId = pane.id;
+    const rt = paneRuntimes.get(pane.id);
+    const block = createDemoBashBlock("cargo check --workspace");
+    rt?.terminal?.addAiBlock(block);
+    rt?.terminal?.focus();
+  }
+
+  function injectDemoUpdateBlock() {
+    const tab = activeTab(state);
+    const pane = tab.layout.panes.find((p) => p.block.kind === "terminal");
+    if (!pane) return;
+    const rt = paneRuntimes.get(pane.id);
+    const paths = ["src/lib.rs", "src/main.rs", "Cargo.toml"];
+    rt?.terminal?.addAiBlock(createDemoUpdateBlock(paths));
+    rt?.terminal?.focus();
+  }
+
   function updatePaneTitle(paneId: string, title: string) {
     const paneEl = stage.querySelector(`[data-pane-id="${paneId}"]`);
     paneEl?.querySelector(".pane-title")?.replaceChildren(title);
@@ -697,6 +749,24 @@ export async function bootWorkspace() {
         title: t("palette.toggleOutput"),
         keywords: "log console output",
         run: () => bottomPanel?.toggle("output"),
+      },
+      {
+        id: "lsp-restart",
+        title: t("palette.restartLsp"),
+        keywords: "rust-analyzer lsp language",
+        run: () => void ensureRustLsp(),
+      },
+      {
+        id: "demo-bash-block",
+        title: t("palette.demoBashBlock"),
+        keywords: "ai wave bash demo",
+        run: () => injectDemoBashBlock(),
+      },
+      {
+        id: "demo-update-block",
+        title: t("palette.demoUpdateBlock"),
+        keywords: "ai wave update demo",
+        run: () => injectDemoUpdateBlock(),
       },
       {
         id: "palette",

@@ -45,6 +45,29 @@ export const zhHans: MessageTree = {
     showCommands: "显示命令面板",
     toggleProblems: "视图：问题面板",
     toggleOutput: "视图：输出面板",
+    restartLsp: "开发：重启 rust-analyzer",
+    demoBashBlock: "演示：插入 Bash AI 块",
+    demoUpdateBlock: "演示：插入 Update AI 块",
+  },
+  lsp: {
+    rustStarted: "LSP：{server} · ws://127.0.0.1:{port}",
+    rustFailed: "LSP 启动失败：{error}",
+    rustStopped: "rust-analyzer 已停止",
+  },
+  aiBlock: {
+    bashBadge: "Bash",
+    updateBadge: "更新",
+    bashTitle: "建议命令",
+    updateTitle: "文件变更",
+    run: "在终端运行",
+    copy: "复制",
+    updateFileSummary: "已修改",
+    status: {
+      pending: "就绪",
+      running: "运行中…",
+      done: "完成",
+      failed: "失败",
+    },
   },
   quickOpen: {
     label: "转到文件",
@@ -53,6 +76,8 @@ export const zhHans: MessageTree = {
     empty: "没有匹配的文件",
     noRecent: "暂无最近文件 — 请从资源管理器打开",
     recent: "最近打开",
+    recentWorkspaces: "最近工作区",
+    workspaceTag: "工作区",
     results: "搜索结果",
   },
   status: {
@@ -126,6 +151,8 @@ export const zhHans: MessageTree = {
     shortcutSplit: "拖动分屏条调整左右区域大小",
     shortcutPalette: "命令面板",
     shortcutQuickOpen: "快速打开 — 转到文件",
+    recentWorkspaces: "最近工作区",
+    recentWorkspacesHint: "或按 ⌘P 选择文件夹",
   },
   terminal: {
     idlePrompt: "字形终端",

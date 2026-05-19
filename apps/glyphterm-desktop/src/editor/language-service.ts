@@ -34,8 +34,8 @@ const CAPABILITIES: Record<string, LanguageCapability> = {
   },
   rust: {
     id: "rust",
-    support: "basic",
-    features: ["syntax"],
+    support: "full",
+    features: ["syntax", "diagnostics", "hover", "completion"],
   },
   plaintext: {
     id: "plaintext",

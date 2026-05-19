@@ -1,6 +1,13 @@
 import { invoke } from "@tauri-apps/api/core";
 import { t } from "../i18n";
 import { Frame, TerminalCanvas } from "../terminal";
+import {
+  createAiBlockOverlay,
+  runBashBlockInTerminal,
+  type AiBlock,
+  type AiBlockOverlay,
+  type BashAiBlock,
+} from "./ai-blocks";
 
 /** One terminal block bound to a PTY tab. */
 export class TerminalBlockView {
@@ -8,8 +15,17 @@ export class TerminalBlockView {
   readonly term: TerminalCanvas;
   tabId = 0;
 
-  constructor(private host: HTMLElement) {
+  private aiOverlay: AiBlockOverlay;
+
+  constructor(
+    private host: HTMLElement,
+    opts?: { onOpenFile?: (path: string) => void },
+  ) {
     this.host.classList.add("terminal-host");
+    this.aiOverlay = createAiBlockOverlay(this.host, {
+      onRunBash: (block) => void this.runBashBlock(block),
+      onOpenFile: opts?.onOpenFile,
+    });
     const idle = document.createElement("div");
     idle.className = "terminal-idle";
     this.refreshIdle(idle);
@@ -110,10 +126,32 @@ export class TerminalBlockView {
     this.term.focus();
   }
 
+  addAiBlock(block: AiBlock) {
+    this.aiOverlay.addBlock(block);
+  }
+
+  private async runBashBlock(block: BashAiBlock) {
+    if (!this.tabId) {
+      this.tabId = await this.attachNewLocalTab();
+    }
+    this.hideIdle();
+    this.focus();
+    const card = this.host.querySelector(`[data-block-id="${block.id}"]`);
+    const statusEl = card?.querySelector(".ai-block-status");
+    await runBashBlockInTerminal(this.tabId, block, (status) => {
+      block.status = status;
+      if (statusEl) {
+        statusEl.textContent = t(`aiBlock.status.${status}`);
+        statusEl.className = `ai-block-status status-${status}`;
+      }
+    });
+  }
+
   destroy() {
     if (this.tabId) {
       void invoke("terminal_tab_close", { tabId: this.tabId });
     }
+    this.aiOverlay.clear();
     this.canvas.remove();
   }
 }

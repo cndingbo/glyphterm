@@ -63,7 +63,7 @@ glyphterm/
 ## 快速开始（开发）
 
 ```bash
-# 需要 Rust 1.78+（https://rustup.rs）
+# 需要 Rust 1.85+（https://rustup.rs）
 cd glyphterm
 cargo test --workspace
 

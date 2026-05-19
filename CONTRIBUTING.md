@@ -4,7 +4,7 @@
 
 ## 开发环境
 
-- Rust 1.78+（`rustup` 安装）
+- Rust 1.85+（`rustup` 安装）
 - 可选：后续 M2 起需要 Node.js（Tauri UI）
 
 ```bash

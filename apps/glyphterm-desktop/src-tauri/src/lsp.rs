@@ -9,7 +9,7 @@ use std::sync::mpsc;
 use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Manager};
 use tungstenite::{accept, Message};
 
 const HEADER_SEP: &[u8; 4] = b"\r\n\r\n";
@@ -106,7 +106,7 @@ fn bridge_stdio_to_ws(
     let Ok(mut ws) = accept(tcp) else {
         running.store(false, Ordering::SeqCst);
         return;
-    }
+    };
 
     let (to_ws_tx, to_ws_rx) = mpsc::channel::<String>();
     let (to_child_tx, to_child_rx) = mpsc::channel::<String>();
@@ -182,7 +182,7 @@ pub fn start_rust_lsp(
     stop_lsp(state);
 
     let analyzer = find_rust_analyzer().ok_or_else(|| {
-        "rust-analyzer not found. Install: rustup component add rust-analyzer".into()
+        "rust-analyzer not found. Install: rustup component add rust-analyzer".to_string()
     })?;
 
     let root = std::path::Path::new(&workspace_root);

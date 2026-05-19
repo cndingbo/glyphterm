@@ -1,3 +1,5 @@
+/* GlyphTerm — global design tokens & chrome */
+
 :root {
   --bg: #08090b;
   --fg: #e8e4dc;
@@ -14,6 +16,22 @@
   --button-hover-bg: rgba(110, 231, 209, 0.12);
   --terminal-bg: #08090b;
   --selection: rgba(110, 231, 209, 0.22);
+  --surface: var(--tab-bar);
+  --surface-raised: var(--titlebar);
+  --text-muted: var(--tab-inactive-fg);
+  --text-subtle: rgba(255, 255, 255, 0.28);
+  --accent-soft: var(--accent-muted);
+  --accent-glow: color-mix(in srgb, var(--accent) 22%, transparent);
+  --pane-bg: var(--terminal-bg);
+  --shadow-pane: 0 16px 48px -20px rgba(0, 0, 0, 0.65);
+  --focus-ring: 0 0 0 1px var(--accent-muted), 0 0 24px -4px var(--accent-muted);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --font-ui: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif;
+  --font-mono: "SF Mono", ui-monospace, monospace;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-fast: 140ms;
 }
 
 * {
@@ -26,14 +44,24 @@ body {
   height: 100%;
   background: var(--bg);
   color: var(--fg);
-  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   overflow: hidden;
+}
+
+::selection {
+  background: var(--selection);
 }
 
 #app {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -20%, var(--accent-glow), transparent 55%),
+    var(--bg);
 }
 
 #workspace-shell:not([hidden]),
@@ -44,32 +72,52 @@ body {
   min-height: 0;
 }
 
-.classic-titlebar-actions {
-  display: inline-flex;
-  gap: 6px;
-  align-items: center;
-}
-
+/* —— Titlebar —— */
 .titlebar {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  background: var(--titlebar);
+  gap: 12px;
+  padding: 0 14px;
+  height: 44px;
+  background: color-mix(in srgb, var(--titlebar) 88%, transparent);
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
   border-bottom: 1px solid var(--border);
   user-select: none;
   -webkit-app-region: drag;
 }
 
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  -webkit-app-region: no-drag;
+}
+
+.brand-mark {
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  background: linear-gradient(145deg, var(--accent), color-mix(in srgb, var(--accent) 40%, #000));
+  box-shadow: 0 0 20px -4px var(--accent-muted);
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #0a0c10;
+  letter-spacing: -0.04em;
+}
+
 .titlebar .logo {
   font-weight: 600;
   font-size: 13px;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
 }
 
 .titlebar .hint {
   font-size: 11px;
-  opacity: 0.45;
+  color: var(--text-subtle);
+  font-weight: 400;
 }
 
 .titlebar-spacer {
@@ -79,46 +127,66 @@ body {
 .titlebar-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   -webkit-app-region: no-drag;
 }
 
-.theme-picker {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  opacity: 0.85;
+.titlebar-actions label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-subtle);
 }
 
-.theme-picker label {
-  opacity: 0.6;
-}
-
-.theme-picker select {
+.titlebar-actions select {
   font-size: 12px;
-  padding: 4px 8px;
-  border-radius: 6px;
+  padding: 5px 10px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--button-border);
   background: var(--button-bg);
   color: var(--fg);
   cursor: pointer;
-  max-width: 140px;
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    background var(--duration-fast) var(--ease-out);
 }
 
-.theme-picker select:hover {
+.titlebar-actions select:hover {
   border-color: var(--accent-muted);
+  background: var(--button-hover-bg);
+}
+
+.theme-picker,
+.ui-mode-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.classic-titlebar-actions,
+.workspace-titlebar-actions {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  padding-left: 4px;
+  border-left: 1px solid var(--border);
+  margin-left: 2px;
 }
 
 .btn-sm {
   font-size: 11px;
-  padding: 4px 10px;
-  border-radius: 6px;
+  font-weight: 500;
+  padding: 5px 12px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--button-border);
   background: var(--button-bg);
   color: var(--fg);
   cursor: pointer;
   white-space: nowrap;
+  transition:
+    background var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out),
+    transform 80ms var(--ease-out);
 }
 
 .btn-sm:hover {
@@ -126,59 +194,97 @@ body {
   border-color: var(--accent-muted);
 }
 
+.btn-sm:active {
+  transform: scale(0.98);
+}
+
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition:
+    color var(--duration-fast),
+    background var(--duration-fast),
+    border-color var(--duration-fast);
+}
+
+.btn-icon:hover {
+  color: var(--fg);
+  background: var(--button-bg);
+  border-color: var(--button-border);
+}
+
+.btn-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* —— Classic mode tabs —— */
 .tab-bar {
   display: flex;
-  gap: 0;
-  padding: 0 6px;
-  background: var(--tab-bar);
+  gap: 2px;
+  padding: 6px 10px 0;
+  background: var(--surface);
   border-bottom: 1px solid var(--border);
   overflow-x: auto;
-  -webkit-app-region: no-drag;
 }
 
 .tab {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 7px 12px;
+  padding: 8px 14px;
   font-size: 12px;
   border: none;
-  border-bottom: 2px solid transparent;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
   background: transparent;
   color: var(--tab-inactive-fg);
   cursor: pointer;
   white-space: nowrap;
   transition:
-    color 0.15s ease,
-    border-color 0.15s ease,
-    background 0.15s ease;
+    color var(--duration-fast) var(--ease-out),
+    background var(--duration-fast) var(--ease-out);
+}
+
+.tab:hover {
+  color: var(--tab-active-fg);
+  background: color-mix(in srgb, var(--fg) 4%, transparent);
 }
 
 .tab.active {
   background: var(--tab-active-bg);
   color: var(--tab-active-fg);
-  border-bottom-color: var(--accent);
+  box-shadow: inset 0 -2px 0 var(--accent);
 }
 
 .tab-close {
-  opacity: 0.45;
+  opacity: 0.4;
   font-size: 14px;
   line-height: 1;
   border-radius: 4px;
-  padding: 0 2px;
+  padding: 0 3px;
+  transition: opacity var(--duration-fast);
 }
 
 .tab-close:hover {
   opacity: 1;
-  color: #f14c4c;
-  background: rgba(241, 76, 76, 0.15);
+  color: var(--danger, #f87171);
+  background: color-mix(in srgb, var(--danger, #f87171) 18%, transparent);
 }
 
 .font-banner {
   margin: 0;
-  padding: 6px 14px;
+  padding: 8px 14px;
   font-size: 12px;
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
   color: var(--accent);
   border-bottom: 1px solid var(--accent-muted);
 }

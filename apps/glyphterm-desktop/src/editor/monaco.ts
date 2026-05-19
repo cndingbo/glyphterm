@@ -6,6 +6,7 @@ import htmlWorker from "monaco-editor/esm/vs/language/html/html.worker?worker";
 import tsWorker from "monaco-editor/esm/vs/language/typescript/ts.worker?worker";
 import { getTheme } from "../themes";
 import { languageIdForPath } from "../fs/client";
+import { applyMonacoThemeFromApp } from "./monaco-theme";
 
 self.MonacoEnvironment = {
   getWorker(_: unknown, label: string) {
@@ -46,18 +47,19 @@ export class MonacoPane {
   mount() {
     if (this.editor) return;
     const t = getTheme();
-    const isLight = t.id === "paper";
+    applyMonacoThemeFromApp(t);
 
     this.editor = monaco.editor.create(this.container, {
       value: this.opts.initialContent ?? "",
       language: this.opts.path
         ? languageIdForPath(this.opts.path)
         : "plaintext",
-      theme: isLight ? "vs" : "vs-dark",
+      theme: `glyphterm-${t.id}`,
       fontFamily: t.font.family,
       fontSize: t.font.size,
       lineHeight: Math.round(t.font.size * t.font.lineHeight),
-      minimap: { enabled: true },
+      fontLigatures: true,
+      minimap: { enabled: true, scale: 1, showSlider: "mouseover" },
       scrollBeyondLastLine: false,
       automaticLayout: true,
       wordWrap: "on",
@@ -65,7 +67,11 @@ export class MonacoPane {
       renderWhitespace: "selection",
       smoothScrolling: true,
       cursorBlinking: "smooth",
-      padding: { top: 12, bottom: 12 },
+      cursorSmoothCaretAnimation: "on",
+      padding: { top: 16, bottom: 16 },
+      bracketPairColorization: { enabled: true },
+      guides: { bracketPairs: true, indentation: true },
+      roundedSelection: true,
     });
 
     this.path = this.opts.path;
@@ -78,6 +84,17 @@ export class MonacoPane {
         ev.preventDefault();
         void this.save();
       }
+    });
+  }
+
+  reapplyTheme() {
+    if (!this.editor) return;
+    applyMonacoThemeFromApp(getTheme());
+    const t = getTheme();
+    this.editor.updateOptions({
+      fontFamily: t.font.family,
+      fontSize: t.font.size,
+      lineHeight: Math.round(t.font.size * t.font.lineHeight),
     });
   }
 

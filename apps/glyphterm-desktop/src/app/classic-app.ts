@@ -17,6 +17,8 @@ export async function bootClassic() {
   if (ws) ws.hidden = true;
   const classicActions = document.getElementById("classic-titlebar-actions");
   if (classicActions) classicActions.hidden = false;
+  const wsActions = document.getElementById("workspace-titlebar-actions");
+  if (wsActions) wsActions.hidden = true;
 
   const canvas = document.getElementById(
     "terminal",

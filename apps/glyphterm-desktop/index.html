@@ -10,7 +10,10 @@
   <body>
     <main id="app">
       <header class="titlebar">
-        <span class="logo">GlyphTerm</span>
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">字</span>
+          <span class="logo">GlyphTerm</span>
+        </div>
         <span class="hint">字形终端 · 工作区</span>
         <div class="titlebar-spacer"></div>
         <div class="titlebar-actions ui-mode-toggle">
@@ -23,6 +26,10 @@
             <label for="theme-select-ws">主题</label>
             <select id="theme-select-ws" title="配色主题"></select>
           </div>
+          <span id="workspace-titlebar-actions" class="workspace-titlebar-actions">
+            <button type="button" id="btn-ws-new-local" class="btn-sm">+ 本地</button>
+            <button type="button" id="btn-ws-new-ssh" class="btn-sm">+ SSH</button>
+          </span>
           <span id="classic-titlebar-actions" class="classic-titlebar-actions" hidden>
             <button type="button" id="btn-new-local" class="btn-sm" title="新标签 (⌘T)">+ 本地</button>
             <button type="button" id="btn-new-ssh" class="btn-sm" title="SSH (⌘⇧N)">+ SSH</button>
@@ -35,7 +42,7 @@
         <div class="workspace-top">
           <nav id="ws-tab-bar" class="ws-tab-bar" aria-label="工作区标签"></nav>
           <button type="button" id="btn-ws-tab-add" class="ws-tab-add" title="新工作区标签">+</button>
-          <button type="button" id="btn-split-h" class="btn-sm" title="分屏">⊞</button>
+          <button type="button" id="btn-split-h" class="btn-icon" title="分屏布局">⊞</button>
           <span id="workspace-path" class="workspace-path"></span>
         </div>
         <div class="workspace-body">

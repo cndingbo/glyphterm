@@ -8,12 +8,23 @@ export class TerminalBlockView {
   tabId = 0;
 
   constructor(private host: HTMLElement) {
+    this.host.classList.add("terminal-host");
+    const idle = document.createElement("div");
+    idle.className = "terminal-idle";
+    idle.innerHTML = `
+      <span class="terminal-idle-prompt">字形终端</span>
+      <span class="terminal-idle-hint">输入命令开始 · CJK 宽度由引擎保证</span>
+      <span class="terminal-idle-cursor" aria-hidden="true"></span>`;
     this.canvas = document.createElement("canvas");
     this.canvas.className = "block-terminal-canvas";
     this.canvas.tabIndex = 0;
-    this.host.appendChild(this.canvas);
+    this.host.append(idle, this.canvas);
     this.term = new TerminalCanvas(this.canvas);
     this.wireInput();
+  }
+
+  private hideIdle() {
+    this.host.querySelector(".terminal-idle")?.classList.add("hidden");
   }
 
   private wireInput() {
@@ -71,6 +82,10 @@ export class TerminalBlockView {
   }
 
   render(frame: Frame) {
+    const hasContent = frame.cells.some(
+      (c) => c.ch && c.ch !== " " && c.ch !== "\0",
+    );
+    if (hasContent) this.hideIdle();
     this.term.render(frame);
   }
 

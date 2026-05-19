@@ -1,6 +1,17 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { onLocaleChange, t, themeDisplayName } from "../i18n";
+import {
+  onLocaleChange,
+  setLocale,
+  t,
+  themeDisplayName,
+  type Locale,
+} from "../i18n";
+import {
+  registerPaletteCommands,
+  refreshPaletteHint,
+  type PaletteCommand,
+} from "../ui/command-palette";
 import { listThemes, loadSavedTheme, saveTheme } from "../themes";
 import { checkCjkFonts, Frame, FramePayload, TerminalCanvas } from "../terminal";
 
@@ -187,6 +198,60 @@ export async function bootClassic() {
     const { tabId, frame } = event.payload;
     frameCache.set(tabId, frame);
     if (tabId === activeTabId) term.render(frame);
+  });
+
+  function syncClassicPalette() {
+    const themeCmds: PaletteCommand[] = listThemes().map((theme) => ({
+      id: `theme-${theme.id}`,
+      title: `${t("palette.themePrefix")}${themeDisplayName(theme)}`,
+      keywords: theme.id,
+      run: () => {
+        saveTheme(theme.id);
+      },
+    }));
+    const localeCmds: PaletteCommand[] = (
+      [
+        ["en", "English"],
+        ["zh-Hans", "简体中文"],
+      ] as [Locale, string][]
+    ).map(([locale, label]) => ({
+      id: `locale-${locale}`,
+      title: `${t("palette.languagePrefix")}${label}`,
+      keywords: locale,
+      run: () => setLocale(locale),
+    }));
+
+    registerPaletteCommands([
+      {
+        id: "new-local",
+        title: t("palette.newLocal"),
+        keywords: "terminal local",
+        run: () => void newLocalTab(),
+      },
+      {
+        id: "new-ssh",
+        title: t("palette.newSsh"),
+        keywords: "ssh",
+        run: () => btnNewSsh?.click(),
+      },
+      {
+        id: "workspace",
+        title: t("palette.openWorkspace"),
+        keywords: "mode layout workspace wave",
+        run: () => {
+          localStorage.setItem("glyphterm-ui-mode", "workspace");
+          location.reload();
+        },
+      },
+      ...themeCmds,
+      ...localeCmds,
+    ]);
+  }
+
+  syncClassicPalette();
+  onLocaleChange(() => {
+    syncClassicPalette();
+    refreshPaletteHint();
   });
 
   await newLocalTab();

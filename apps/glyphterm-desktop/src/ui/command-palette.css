@@ -1,0 +1,105 @@
+.command-palette {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 12vh 24px 24px;
+}
+
+.command-palette[hidden] {
+  display: none !important;
+}
+
+.command-palette-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+}
+
+.command-palette-panel {
+  position: relative;
+  width: min(560px, 100%);
+  border-radius: var(--radius-lg, 14px);
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface-raised) 92%, transparent);
+  backdrop-filter: blur(24px);
+  box-shadow: var(--shadow-pane), 0 24px 80px -24px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+}
+
+.command-palette-input {
+  width: 100%;
+  padding: 14px 16px;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  color: var(--fg);
+  font-size: 15px;
+  font-family: var(--font-ui);
+  outline: none;
+}
+
+.command-palette-list {
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.command-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+  transition: background var(--duration-fast, 140ms);
+}
+
+.command-item.active,
+.command-item:hover {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.command-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--fg);
+}
+
+.command-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.command-empty {
+  padding: 16px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.command-palette-hint {
+  margin: 0;
+  padding: 8px 14px;
+  font-size: 10px;
+  color: var(--text-subtle);
+  border-top: 1px solid var(--border);
+}
+
+body.ws-split-dragging {
+  cursor: col-resize !important;
+  user-select: none;
+}
+
+body.ws-split-dragging.ws-split-dragging-col {
+  cursor: col-resize !important;
+}
+
+body.ws-split-dragging.ws-split-dragging-row {
+  cursor: row-resize !important;
+}

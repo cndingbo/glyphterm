@@ -1,6 +1,7 @@
 import { bootClassic } from "./app/classic-app";
 import { bootWorkspace } from "./app/workspace-app";
 import { initI18n, wireLanguageSelector } from "./i18n";
+import { initCommandPaletteShortcut } from "./ui/command-palette";
 import { loadSavedTheme } from "./themes";
 
 const MODE_KEY = "glyphterm-ui-mode";
@@ -20,6 +21,7 @@ initI18n();
 wireLanguageSelector();
 loadSavedTheme();
 wireModeToggle();
+initCommandPaletteShortcut();
 
 const mode = localStorage.getItem(MODE_KEY) ?? "workspace";
 if (mode === "classic") {

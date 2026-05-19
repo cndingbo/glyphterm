@@ -24,6 +24,22 @@ export const zhHans: MessageTree = {
     newSshTitle: "SSH 远程 (⌘⇧N)",
     newWorkspaceTab: "新工作区标签",
     splitLayout: "分屏布局",
+    resetSplit: "重置分屏为 50/50",
+    toggleSplitAxis: "切换分屏方向（横 / 竖）",
+  },
+  palette: {
+    hint: "↑↓ 选择 · Enter 执行 · Esc 关闭",
+    empty: "没有匹配的命令",
+    toggleFiles: "资源管理器：显示文件树",
+    toggleTerminal: "聚焦终端活动栏",
+    newLocal: "终端：新建本地会话",
+    newSsh: "终端：新建 SSH 会话",
+    resetSplit: "布局：重置分屏 50/50",
+    toggleSplitAxis: "布局：切换分屏方向",
+    openClassic: "切换到经典终端布局",
+    openWorkspace: "切换到工作区布局",
+    themePrefix: "主题：",
+    languagePrefix: "语言：",
   },
   a11y: {
     workspaceTabs: "工作区标签",
@@ -59,7 +75,7 @@ export const zhHans: MessageTree = {
     desc: "Monaco 内核 · 与 VS Code / Cursor 同源 · 支持 ⌘S 保存",
     shortcutSave: "保存文件",
     shortcutFiles: "侧栏浏览项目",
-    shortcutSplit: "分屏（即将支持拖拽）",
+    shortcutSplit: "拖动分屏条调整左右区域大小",
   },
   terminal: {
     idlePrompt: "字形终端",
@@ -72,8 +88,8 @@ export const zhHans: MessageTree = {
     password: "密码 (留空则使用 ssh-agent / ~/.ssh/id_ed25519):",
     failed: "SSH 连接失败: {error}",
   },
-  alerts: {
-    splitSoon: "下一版支持动态分屏；当前为默认左右双块布局。",
+  split: {
+    gutterTitle: "拖动以调整分屏",
   },
   errors: {
     readFile: "// 无法读取: {error}",

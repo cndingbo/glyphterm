@@ -10,7 +10,19 @@ import {
   writeText,
 } from "../fs/client";
 import { applyMonacoThemeFromApp } from "../editor/monaco-theme";
-import { onLocaleChange, t, themeDisplayName } from "../i18n";
+import {
+  onLocaleChange,
+  setLocale,
+  t,
+  themeDisplayName,
+  type Locale,
+} from "../i18n";
+import {
+  registerPaletteCommands,
+  refreshPaletteHint,
+  type PaletteCommand,
+} from "../ui/command-palette";
+import { attachSplitResizer } from "../workspace/split-resize";
 import {
   getTheme,
   loadSavedTheme,
@@ -64,6 +76,7 @@ export async function bootWorkspace() {
   const frameCache = new Map<number, Frame>();
   const terminals = new Map<number, TerminalBlockView>();
   const paneRuntimes = new Map<string, PaneRuntime>();
+  let detachSplitResizer: (() => void) | null = null;
 
   const stage = document.getElementById("workspace-stage")!;
   const wsTabBar = document.getElementById("ws-tab-bar")!;
@@ -90,8 +103,18 @@ export async function bootWorkspace() {
   const splitBtn = document.getElementById("btn-split-h");
   if (splitBtn) {
     splitBtn.innerHTML = iconSplit;
+    splitBtn.title = t("actions.resetSplit");
     splitBtn.addEventListener("click", () => {
-      alert(t("alerts.splitSoon"));
+      activeTab(state).layout.split = 50;
+      saveWorkspaceState(state);
+      persistAndRender();
+    });
+    splitBtn.addEventListener("dblclick", (ev) => {
+      ev.preventDefault();
+      const tab = activeTab(state);
+      tab.layout.direction = tab.layout.direction === "row" ? "column" : "row";
+      saveWorkspaceState(state);
+      persistAndRender();
     });
   }
 
@@ -119,6 +142,9 @@ export async function bootWorkspace() {
       rt.welcome?.refresh();
       rt.terminal?.relocalizeIdle();
     }
+    if (splitBtn) splitBtn.title = t("actions.resetSplit");
+    syncWorkspacePalette();
+    refreshPaletteHint();
   });
 
   window.addEventListener("resize", () => {
@@ -215,7 +241,54 @@ export async function bootWorkspace() {
     }
   }
 
+  function buildPaneElement(pane: Pane, tab: ReturnType<typeof activeTab>) {
+    const paneEl = document.createElement("section");
+    paneEl.className = `ws-pane${pane.id === tab.activePaneId ? " active" : ""}`;
+    paneEl.dataset.paneId = pane.id;
+
+    const isTerm = pane.block.kind === "terminal";
+    const chrome = document.createElement("header");
+    chrome.className = "pane-chrome";
+    chrome.innerHTML = `
+      <div class="pane-chrome-left">
+        <span class="pane-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span class="pane-badge${isTerm ? "" : " editor"}">${isTerm ? t("pane.term") : t("pane.edit")}</span>
+        <span class="pane-title">${escapeHtml(blockTitle(pane.block))}</span>
+      </div>
+      <span class="pane-actions">
+        <button type="button" class="pane-btn" data-action="focus" title="${escapeHtml(t("pane.focus"))}">${iconGear}</button>
+      </span>`;
+    chrome.querySelector("[data-action=focus]")?.addEventListener("click", () => {
+      tab.activePaneId = pane.id;
+      stage.querySelectorAll(".ws-pane").forEach((p) => {
+        p.classList.toggle("active", (p as HTMLElement).dataset.paneId === pane.id);
+      });
+      paneRuntimes.get(pane.id)?.terminal?.focus();
+      paneRuntimes.get(pane.id)?.editor?.layout();
+    });
+
+    const body = document.createElement("div");
+    body.className = "pane-body";
+
+    paneEl.append(chrome, body);
+    paneEl.addEventListener("mousedown", () => {
+      if (tab.activePaneId !== pane.id) {
+        tab.activePaneId = pane.id;
+        stage.querySelectorAll(".ws-pane").forEach((p) => {
+          p.classList.toggle("active", p === paneEl);
+        });
+      }
+    });
+
+    const rt: PaneRuntime = { pane, el: body };
+    paneRuntimes.set(pane.id, rt);
+    void mountBlock(rt, pane.block);
+    return paneEl;
+  }
+
   function renderStage() {
+    detachSplitResizer?.();
+    detachSplitResizer = null;
     for (const rt of paneRuntimes.values()) {
       rt.terminal?.destroy();
       rt.editor?.dispose();
@@ -228,50 +301,32 @@ export async function bootWorkspace() {
     split.className = `ws-split ws-split-${tab.layout.direction}`;
     split.style.setProperty("--split", `${tab.layout.split}%`);
 
-    for (const pane of tab.layout.panes) {
-      const paneEl = document.createElement("section");
-      paneEl.className = `ws-pane${pane.id === tab.activePaneId ? " active" : ""}`;
-      paneEl.dataset.paneId = pane.id;
+    const panes = tab.layout.panes;
+    for (let i = 0; i < panes.length; i++) {
+      split.appendChild(buildPaneElement(panes[i], tab));
+      if (i === 0 && panes.length > 1) {
+        const gutter = document.createElement("div");
+        gutter.className = "ws-split-gutter";
+        gutter.setAttribute("role", "separator");
+        gutter.setAttribute(
+          "aria-orientation",
+          tab.layout.direction === "row" ? "vertical" : "horizontal",
+        );
+        gutter.title = t("split.gutterTitle");
+        split.appendChild(gutter);
+      }
+    }
 
-      const isTerm = pane.block.kind === "terminal";
-      const chrome = document.createElement("header");
-      chrome.className = "pane-chrome";
-      chrome.innerHTML = `
-        <div class="pane-chrome-left">
-          <span class="pane-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-          <span class="pane-badge${isTerm ? "" : " editor"}">${isTerm ? "TERM" : "EDIT"}</span>
-          <span class="pane-title">${escapeHtml(blockTitle(pane.block))}</span>
-        </div>
-        <span class="pane-actions">
-          <button type="button" class="pane-btn" data-action="focus" title="${escapeHtml(t("pane.focus"))}">${iconGear}</button>
-        </span>`;
-      chrome.querySelector("[data-action=focus]")?.addEventListener("click", () => {
-        tab.activePaneId = pane.id;
-        stage.querySelectorAll(".ws-pane").forEach((p) => {
-          p.classList.toggle("active", (p as HTMLElement).dataset.paneId === pane.id);
-        });
-        paneRuntimes.get(pane.id)?.terminal?.focus();
-        paneRuntimes.get(pane.id)?.editor?.layout();
+    const gutter = split.querySelector(".ws-split-gutter");
+    if (gutter instanceof HTMLElement) {
+      detachSplitResizer = attachSplitResizer(split, gutter, {
+        direction: tab.layout.direction,
+        getSplit: () => tab.layout.split,
+        setSplit: (pct) => {
+          tab.layout.split = pct;
+        },
+        onCommit: () => saveWorkspaceState(state),
       });
-
-      const body = document.createElement("div");
-      body.className = "pane-body";
-
-      paneEl.append(chrome, body);
-      paneEl.addEventListener("mousedown", () => {
-        if (tab.activePaneId !== pane.id) {
-          tab.activePaneId = pane.id;
-          stage.querySelectorAll(".ws-pane").forEach((p) => {
-            p.classList.toggle("active", p === paneEl);
-          });
-        }
-      });
-
-      split.appendChild(paneEl);
-
-      const rt: PaneRuntime = { pane, el: body };
-      paneRuntimes.set(pane.id, rt);
-      void mountBlock(rt, pane.block);
     }
 
     stage.appendChild(split);
@@ -479,6 +534,98 @@ export async function bootWorkspace() {
     const paneEl = stage.querySelector(`[data-pane-id="${paneId}"]`);
     paneEl?.querySelector(".pane-title")?.replaceChildren(title);
   }
+
+  function syncWorkspacePalette() {
+    const themeCmds: PaletteCommand[] = listThemes().map((theme) => ({
+      id: `theme-${theme.id}`,
+      title: `${t("palette.themePrefix")}${themeDisplayName(theme)}`,
+      keywords: theme.id,
+      run: () => {
+        saveTheme(theme.id);
+        applyMonacoThemeFromApp(getTheme());
+      },
+    }));
+    const localeCmds: PaletteCommand[] = (
+      [
+        ["en", "English"],
+        ["zh-Hans", "简体中文"],
+      ] as [Locale, string][]
+    ).map(([locale, label]) => ({
+      id: `locale-${locale}`,
+      title: `${t("palette.languagePrefix")}${label}`,
+      keywords: locale,
+      run: () => setLocale(locale),
+    }));
+
+    registerPaletteCommands([
+      {
+        id: "files",
+        title: t("palette.toggleFiles"),
+        keywords: "explorer tree files",
+        run: () => {
+          state.activity = "files";
+          state.sidePanelOpen = true;
+          persistAndRender();
+        },
+      },
+      {
+        id: "terminal-activity",
+        title: t("palette.toggleTerminal"),
+        keywords: "terminal activity",
+        run: () => {
+          state.activity = "terminal";
+          state.sidePanelOpen = true;
+          persistAndRender();
+        },
+      },
+      {
+        id: "new-local",
+        title: t("palette.newLocal"),
+        keywords: "terminal bash shell local",
+        run: () => void wsNewLocal(),
+      },
+      {
+        id: "new-ssh",
+        title: t("palette.newSsh"),
+        keywords: "ssh remote",
+        run: () => void wsNewSsh(),
+      },
+      {
+        id: "reset-split",
+        title: t("palette.resetSplit"),
+        keywords: "layout split 50",
+        run: () => {
+          activeTab(state).layout.split = 50;
+          saveWorkspaceState(state);
+          persistAndRender();
+        },
+      },
+      {
+        id: "toggle-axis",
+        title: t("palette.toggleSplitAxis"),
+        keywords: "layout vertical horizontal column row",
+        run: () => {
+          const tab = activeTab(state);
+          tab.layout.direction = tab.layout.direction === "row" ? "column" : "row";
+          saveWorkspaceState(state);
+          persistAndRender();
+        },
+      },
+      {
+        id: "classic",
+        title: t("palette.openClassic"),
+        keywords: "mode layout classic",
+        run: () => {
+          localStorage.setItem("glyphterm-ui-mode", "classic");
+          location.reload();
+        },
+      },
+      ...themeCmds,
+      ...localeCmds,
+    ]);
+  }
+
+  syncWorkspacePalette();
 }
 
 function escapeHtml(s: string) {

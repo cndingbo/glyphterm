@@ -22,6 +22,22 @@ export const en = {
     newSshTitle: "New SSH session (⌘⇧N)",
     newWorkspaceTab: "New workspace tab",
     splitLayout: "Split layout",
+    resetSplit: "Reset split to 50/50",
+    toggleSplitAxis: "Toggle split axis (horizontal / vertical)",
+  },
+  palette: {
+    hint: "↑↓ navigate · Enter run · Esc close",
+    empty: "No matching commands",
+    toggleFiles: "Explorer: Show file tree",
+    toggleTerminal: "Focus terminal activity",
+    newLocal: "Terminal: New local session",
+    newSsh: "Terminal: New SSH session",
+    resetSplit: "Layout: Reset pane split 50/50",
+    toggleSplitAxis: "Layout: Toggle split direction",
+    openClassic: "Switch to classic terminal layout",
+    openWorkspace: "Switch to workspace layout",
+    themePrefix: "Theme:",
+    languagePrefix: "Language:",
   },
   a11y: {
     workspaceTabs: "Workspace tabs",
@@ -57,7 +73,7 @@ export const en = {
     desc: "Monaco core · Same engine family as VS Code / Cursor · ⌘S to save",
     shortcutSave: "Save file",
     shortcutFiles: "Browse project in sidebar",
-    shortcutSplit: "Split panes (drag resize soon)",
+    shortcutSplit: "Drag the gutter between panes to resize",
   },
   terminal: {
     idlePrompt: "GlyphTerm",
@@ -70,9 +86,8 @@ export const en = {
     password: "Password (empty = ssh-agent / ~/.ssh/id_ed25519):",
     failed: "SSH connection failed: {error}",
   },
-  alerts: {
-    splitSoon:
-      "Drag-to-resize splits arrive in the next release. Default side-by-side layout is active.",
+  split: {
+    gutterTitle: "Drag to resize panes",
   },
   errors: {
     readFile: "// Failed to read: {error}",

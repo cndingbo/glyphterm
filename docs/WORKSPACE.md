@@ -7,13 +7,15 @@ GlyphTerm 工作区将终端、编辑器、侧栏组合为可扩展的 **Block**
 | 能力 | 状态 |
 |------|------|
 | 工作区标签 T1/T2/T3… | ✅ |
-| 左右分屏（终端 + 编辑器） | ✅ |
+| 左右/上下分屏（终端 + 编辑器） | ✅ |
+| 拖拽分屏条调整比例（持久化） | ✅ |
+| 命令面板 ⌘K / Ctrl+K | ✅ |
 | 活动栏：terminal / files / sysinfo / process | ✅（后两者占位） |
 | 文件树 + 点击打开 | ✅ |
 | **Monaco 编辑器**（VS Code 同源内核） | ✅ |
 | ⌘S 保存 | ✅ |
 | 经典单终端界面 | ✅（标题栏切换） |
-| 动态拖拽分屏 / LSP / AI 块 | 🔜 |
+| LSP / ⌘K 文件搜索 / AI 块 | 🔜 |
 
 ## 架构
 
@@ -37,6 +39,8 @@ GlyphTerm 工作区将终端、编辑器、侧栏组合为可扩展的 **Block**
 |------|------|
 | `src/workspace/types.ts` | Block / Pane / Tab 类型 |
 | `src/workspace/store.ts` | 状态与 localStorage |
+| `src/workspace/split-resize.ts` | 分屏拖拽 |
+| `src/ui/command-palette.ts` | 命令面板 |
 | `src/app/workspace-app.ts` | 工作区 UI 编排 |
 | `src/editor/monaco.ts` | Monaco 封装 |
 | `src/terminal/block.ts` | 单块终端视图 |

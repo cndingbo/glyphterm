@@ -283,19 +283,85 @@
   display: flex;
   flex: 1;
   min-height: 0;
-  gap: 8px;
+  min-width: 0;
+  gap: 0;
 }
 
 .ws-split-row {
   flex-direction: row;
 }
 
+.ws-split-column {
+  flex-direction: column;
+}
+
 .ws-split-row > .ws-pane:first-child {
   flex: 0 0 var(--split);
+  min-width: 160px;
 }
 
 .ws-split-row > .ws-pane:last-child {
-  flex: 1;
+  flex: 1 1 0;
+  min-width: 160px;
+}
+
+.ws-split-column > .ws-pane:first-child {
+  flex: 0 0 var(--split);
+  min-height: 120px;
+}
+
+.ws-split-column > .ws-pane:last-child {
+  flex: 1 1 0;
+  min-height: 120px;
+}
+
+.ws-split-gutter {
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+  background: transparent;
+  transition: background var(--duration-fast, 140ms);
+}
+
+.ws-split-row > .ws-split-gutter {
+  width: 6px;
+  margin: 8px 0;
+  cursor: col-resize;
+}
+
+.ws-split-column > .ws-split-gutter {
+  height: 6px;
+  margin: 0 8px;
+  cursor: row-resize;
+}
+
+.ws-split-gutter::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--fg) 6%, transparent);
+  transition:
+    background var(--duration-fast, 140ms),
+    box-shadow var(--duration-fast, 140ms);
+}
+
+.ws-split-gutter:hover::after,
+.ws-split-gutter.dragging::after {
+  background: color-mix(in srgb, var(--accent) 35%, transparent);
+  box-shadow: 0 0 12px var(--accent-muted);
+}
+
+body.ws-split-dragging {
+  user-select: none;
+}
+
+body.ws-split-dragging-col {
+  cursor: col-resize;
+}
+
+body.ws-split-dragging-row {
+  cursor: row-resize;
 }
 
 /* Panes */

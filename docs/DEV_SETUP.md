@@ -20,11 +20,19 @@ cargo --version
 rustc --version
 ```
 
-若未安装 Rust：
+若未安装 Rust，或 `cargo` / `rustc` 报 `No such file or directory`（`~/.cargo/bin/rustup` 丢失）：
 
 ```bash
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 source "$HOME/.cargo/env"
+rustc --version
+cargo --version
+```
+
+若仍有编译错误 `State::Osc not covered`，请同步最新代码：
+
+```bash
+cd ~/projects/glyphterm && git pull
 ```
 
 ## 2. Node.js（必须）

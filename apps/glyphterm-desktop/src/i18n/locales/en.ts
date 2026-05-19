@@ -66,6 +66,7 @@ export const en = {
       done: "Done",
       failed: "Failed",
     },
+    parseFailed: "Failed to parse AI block payload",
   },
   quickOpen: {
     label: "Go to file",

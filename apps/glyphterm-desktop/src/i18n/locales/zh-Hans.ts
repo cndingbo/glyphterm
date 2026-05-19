@@ -68,6 +68,7 @@ export const zhHans: MessageTree = {
       done: "完成",
       failed: "失败",
     },
+    parseFailed: "无法解析 AI 块数据",
   },
   quickOpen: {
     label: "转到文件",

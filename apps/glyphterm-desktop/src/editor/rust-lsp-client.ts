@@ -63,6 +63,8 @@ export class RustLspClient {
         { workspaceRoot },
       );
       await this.connect(result.port);
+      const { registerRustLspProviders } = await import("./lsp-providers");
+      registerRustLspProviders(this);
       appendOutput(
         "GlyphTerm",
         t("lsp.rustStarted", { server: result.server, port: String(result.port) }),
@@ -110,8 +112,16 @@ export class RustLspClient {
     const caps = {
       textDocument: {
         synchronization: { dynamicRegistration: false },
-        completion: { dynamicRegistration: false },
-        hover: { dynamicRegistration: false },
+        completion: {
+          dynamicRegistration: false,
+          completionItem: {
+            snippetSupport: true,
+            commitCharactersSupport: true,
+          },
+        },
+        hover: { dynamicRegistration: false, contentFormat: ["markdown", "plaintext"] },
+        definition: { dynamicRegistration: false },
+        publishDiagnostics: { relatedInformation: true },
       },
     };
     const result = await this.sendRequest("initialize", {
@@ -210,6 +220,12 @@ export class RustLspClient {
 
   private sendNotification(method: string, params: unknown) {
     this.ws?.send(JSON.stringify({ jsonrpc: "2.0", method, params }));
+  }
+
+  /** JSON-RPC request (used by Monaco LSP providers). */
+  request(method: string, params: unknown): Promise<unknown> {
+    if (!this.ready) return Promise.reject(new Error("LSP not ready"));
+    return this.sendRequest(method, params);
   }
 
   private sendRequest(method: string, params: unknown): Promise<unknown> {

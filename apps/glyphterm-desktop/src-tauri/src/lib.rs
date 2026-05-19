@@ -245,6 +245,24 @@ fn lsp_rust_status(state: State<'_, AppState>) -> Result<Option<u16>, String> {
     Ok(*state.lsp.port.lock())
 }
 
+#[derive(serde::Deserialize)]
+struct AiBlockEmit {
+    tab_id: u64,
+    block_json: String,
+}
+
+#[tauri::command]
+fn terminal_emit_ai_block(app: AppHandle, payload: AiBlockEmit) -> Result<(), String> {
+    app.emit(
+        "terminal-ai-block",
+        serde_json::json!({
+            "tabId": payload.tab_id,
+            "blockJson": payload.block_json,
+        }),
+    )
+    .map_err(|e| e.to_string())
+}
+
 #[tauri::command]
 fn terminal_copy_selection(
     state: State<'_, AppState>,
@@ -312,6 +330,7 @@ pub fn run() {
             lsp_rust_start,
             lsp_rust_stop,
             lsp_rust_status,
+            terminal_emit_ai_block,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

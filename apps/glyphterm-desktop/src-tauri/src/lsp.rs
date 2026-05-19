@@ -153,7 +153,7 @@ fn bridge_stdio_to_ws(
         }
         match ws.read() {
             Ok(Message::Text(text)) => {
-                if to_child_tx.send(text).is_err() {
+                if to_child_tx.send(text.to_string()).is_err() {
                     break;
                 }
             }

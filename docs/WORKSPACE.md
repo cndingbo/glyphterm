@@ -21,8 +21,8 @@ GlyphTerm 工作区将终端、编辑器、侧栏组合为可扩展的 **Block**
 | **Monaco 编辑器**（VS Code 同源内核） | ✅ |
 | ⌘S 保存 | ✅ |
 | 经典单终端界面 | ✅（标题栏切换） |
-| rust-analyzer LSP（Rust 诊断） | ✅ |
-| Wave AI 块（Bash / Update 卡片） | ✅ α |
+| rust-analyzer LSP（诊断 / 补全 / Hover / 跳转） | ✅ |
+| Wave AI 块（Bash / Update + `terminal-ai-block` 事件） | ✅ α |
 | 最近工作区（⌘P / 欢迎页） | ✅ |
 | LSP 补全 / 多语言 server | 🔜 |
 

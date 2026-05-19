@@ -16,6 +16,7 @@ import { getRustLspClient } from "../editor/rust-lsp-client";
 import {
   createDemoBashBlock,
   createDemoUpdateBlock,
+  type AiBlock,
 } from "../terminal/ai-blocks";
 import { applyMonacoThemeFromApp } from "../editor/monaco-theme";
 import {
@@ -228,6 +229,16 @@ export async function bootWorkspace() {
     const { tabId, frame } = event.payload;
     frameCache.set(tabId, frame);
     terminals.get(tabId)?.render(frame);
+  });
+
+  await listen<{ tabId: number; blockJson: string }>("terminal-ai-block", (event) => {
+    const { tabId, blockJson } = event.payload;
+    try {
+      const block = JSON.parse(blockJson) as AiBlock;
+      terminals.get(tabId)?.addAiBlock(block);
+    } catch {
+      appendOutput("GlyphTerm", t("aiBlock.parseFailed"));
+    }
   });
 
   persistAndRender();

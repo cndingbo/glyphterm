@@ -27,6 +27,9 @@ enum State {
     Ground,
     Escape,
     Csi,
+    /// OSC: ESC ] ... BEL (0x07) or ST (ESC \)
+    Osc,
+    OscEsc,
 }
 
 impl Parser {
@@ -53,8 +56,8 @@ impl Parser {
                     self.esc_buf.clear();
                 }
                 0x07 => {
+                    // BEL — often OSC terminator; ignore in ground
                     self.flush_utf8(out);
-                    out.push(Action::Execute(b));
                 }
                 0x08 | 0x09 | 0x0A | 0x0D => {
                     self.flush_utf8(out);
@@ -67,8 +70,25 @@ impl Parser {
                     self.state = State::Csi;
                     self.esc_buf.clear();
                 }
+                b']' => {
+                    self.state = State::Osc;
+                }
                 _ => {
                     self.state = State::Ground;
+                }
+            },
+            State::Osc => match b {
+                0x07 => self.state = State::Ground,
+                0x1B => self.state = State::OscEsc,
+                _ => {}
+            },
+            State::OscEsc => match b {
+                b'\\' => self.state = State::Ground,
+                _ => {
+                    self.state = State::Osc;
+                    if b != 0x1B {
+                        // swallow
+                    }
                 }
             },
             State::Csi => {
@@ -195,5 +215,14 @@ mod tests {
         let actions = p.feed(b"\x1b[38;2;255;100;50m");
         apply(&mut grid, &actions);
         assert_eq!(grid.fg, 0xFF6432);
+    }
+
+    #[test]
+    fn osc_shell_integration_ignored() {
+        let mut grid = Grid::new(80, 24, WidthPolicy::default());
+        let mut p = Parser::new();
+        let actions = p.feed(b"\x1b]1337;RemoteHost=example.com\x07prompt");
+        apply(&mut grid, &actions);
+        assert_eq!(grid.dump_plain(), "prompt");
     }
 }

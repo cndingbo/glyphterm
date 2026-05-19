@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 开发文档
+    url: https://github.com/cndingbo/glyphterm/blob/main/docs/DEV_SETUP.md
+    about: 环境搭建、Rust 工具链、Tauri 运行方式
+  - name: 架构说明
+    url: https://github.com/cndingbo/glyphterm/blob/main/docs/ARCHITECTURE.md
+    about: 系统设计、里程碑与模块边界
+  - name: 安全报告
+    url: https://github.com/cndingbo/glyphterm/blob/main/SECURITY.md
+    about: 请勿公开披露安全漏洞

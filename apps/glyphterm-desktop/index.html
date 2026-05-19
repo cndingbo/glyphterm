@@ -11,7 +11,12 @@
       <header class="titlebar">
         <span class="logo">GlyphTerm</span>
         <span class="hint">字形终端 · CJK-first</span>
+        <div class="titlebar-spacer"></div>
         <div class="titlebar-actions">
+          <div class="theme-picker">
+            <label for="theme-select">主题</label>
+            <select id="theme-select" title="终端配色主题"></select>
+          </div>
           <button type="button" id="btn-new-local" class="btn-sm" title="新标签 (⌘T)">+ 本地</button>
           <button type="button" id="btn-new-ssh" class="btn-sm" title="SSH (⌘⇧N)">+ SSH</button>
         </div>

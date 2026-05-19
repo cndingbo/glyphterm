@@ -1,8 +1,19 @@
 :root {
   --bg: #08090b;
-  --fg: #f5f3ee;
-  --accent: #6ee7d1;
+  --fg: #e8e4dc;
   --titlebar: #0c0e12;
+  --tab-bar: #0c0e12;
+  --tab-active-bg: #08090b;
+  --tab-active-fg: #f5f3ee;
+  --tab-inactive-fg: rgba(245, 243, 238, 0.45);
+  --border: rgba(255, 255, 255, 0.08);
+  --accent: #6ee7d1;
+  --accent-muted: rgba(110, 231, 209, 0.35);
+  --button-bg: rgba(255, 255, 255, 0.05);
+  --button-border: rgba(255, 255, 255, 0.1);
+  --button-hover-bg: rgba(110, 231, 209, 0.12);
+  --terminal-bg: #08090b;
+  --selection: rgba(110, 231, 209, 0.22);
 }
 
 * {
@@ -15,7 +26,7 @@ body {
   height: 100%;
   background: var(--bg);
   color: var(--fg);
-  font-family: system-ui, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif;
   overflow: hidden;
 }
 
@@ -28,52 +39,85 @@ body {
 .titlebar {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 14px;
+  gap: 10px;
+  padding: 8px 12px;
   background: var(--titlebar);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--border);
   user-select: none;
   -webkit-app-region: drag;
 }
 
 .titlebar .logo {
   font-weight: 600;
-  letter-spacing: 0.02em;
+  font-size: 13px;
+  letter-spacing: 0.04em;
 }
 
 .titlebar .hint {
-  font-size: 12px;
-  opacity: 0.5;
+  font-size: 11px;
+  opacity: 0.45;
+}
+
+.titlebar-spacer {
   flex: 1;
 }
 
 .titlebar-actions {
   display: flex;
+  align-items: center;
   gap: 8px;
   -webkit-app-region: no-drag;
 }
 
-.btn-sm {
+.theme-picker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  opacity: 0.85;
+}
+
+.theme-picker label {
+  opacity: 0.6;
+}
+
+.theme-picker select {
   font-size: 12px;
-  padding: 4px 10px;
+  padding: 4px 8px;
   border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--button-border);
+  background: var(--button-bg);
   color: var(--fg);
   cursor: pointer;
+  max-width: 140px;
+}
+
+.theme-picker select:hover {
+  border-color: var(--accent-muted);
+}
+
+.btn-sm {
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--button-border);
+  background: var(--button-bg);
+  color: var(--fg);
+  cursor: pointer;
+  white-space: nowrap;
 }
 
 .btn-sm:hover {
-  background: rgba(110, 231, 209, 0.15);
-  border-color: rgba(110, 231, 209, 0.35);
+  background: var(--button-hover-bg);
+  border-color: var(--accent-muted);
 }
 
 .tab-bar {
   display: flex;
-  gap: 2px;
-  padding: 4px 8px 0;
-  background: var(--titlebar);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 0;
+  padding: 0 6px;
+  background: var(--tab-bar);
+  border-bottom: 1px solid var(--border);
   overflow-x: auto;
   -webkit-app-region: no-drag;
 }
@@ -82,46 +126,54 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 10px;
+  padding: 7px 12px;
   font-size: 12px;
   border: none;
-  border-radius: 6px 6px 0 0;
+  border-bottom: 2px solid transparent;
   background: transparent;
-  color: var(--text-secondary, rgba(245, 243, 238, 0.6));
+  color: var(--tab-inactive-fg);
   cursor: pointer;
   white-space: nowrap;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease,
+    background 0.15s ease;
 }
 
 .tab.active {
-  background: var(--bg);
-  color: var(--fg);
+  background: var(--tab-active-bg);
+  color: var(--tab-active-fg);
+  border-bottom-color: var(--accent);
 }
 
 .tab-close {
-  opacity: 0.5;
+  opacity: 0.45;
   font-size: 14px;
   line-height: 1;
+  border-radius: 4px;
+  padding: 0 2px;
 }
 
 .tab-close:hover {
   opacity: 1;
   color: #f14c4c;
+  background: rgba(241, 76, 76, 0.15);
 }
 
 .font-banner {
   margin: 0;
   padding: 6px 14px;
   font-size: 12px;
-  background: rgba(110, 231, 209, 0.12);
-  color: var(--accent, #6ee7d1);
-  border-bottom: 1px solid rgba(110, 231, 209, 0.2);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent);
+  border-bottom: 1px solid var(--accent-muted);
 }
 
 #terminal-wrap {
   flex: 1;
   position: relative;
   overflow: hidden;
-  background: var(--bg);
+  background: var(--terminal-bg);
 }
 
 #terminal {

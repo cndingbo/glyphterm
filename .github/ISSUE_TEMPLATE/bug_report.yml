@@ -1,0 +1,72 @@
+name: Bug 报告
+description: 终端显示、会话、崩溃或构建问题
+title: "[bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈。请先确认 [DEV_SETUP](https://github.com/cndingbo/glyphterm/blob/main/docs/DEV_SETUP.md) 与 `main` 最新代码。
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: 组件
+      options:
+        - 桌面应用 (Tauri)
+        - CLI (glyphterm-cli)
+        - CJK / 列宽 / 渲染
+        - VT 解析 / 颜色
+        - SSH
+        - 构建 / CI
+        - 其他
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: 版本 / 提交
+      description: `cargo run -p glyphterm-cli -- --version` 或 git commit hash
+      placeholder: "main @ abc1234 或 0.1.0"
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      placeholder: |
+        1. 启动 `npm run tauri dev`
+        2. 打开本地 zsh
+        3. 运行 `ls`
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望行为
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际行为
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: 操作系统
+      placeholder: "macOS 15.x arm64"
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 日志 / 截图
+      description: 可粘贴终端输出或附上截图

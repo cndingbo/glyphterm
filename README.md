@@ -1,10 +1,32 @@
 # GlyphTerm
 
-[![GitHub](https://img.shields.io/github/stars/cndingbo/glyphterm?style=social)](https://github.com/cndingbo/glyphterm)
+[![CI](https://github.com/cndingbo/glyphterm/actions/workflows/ci.yml/badge.svg)](https://github.com/cndingbo/glyphterm/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](./LICENSE)
+[![Rust](https://img.shields.io/badge/rust-1.85%2B-orange.svg)](https://www.rust-lang.org/)
+[![Tauri](https://img.shields.io/badge/Tauri-2.0-24C8DB?logo=tauri&logoColor=white)](https://tauri.app/)
 
-**GlyphTerm**（字形终端）是一款开源、AI 友好的现代终端与工作区。**Unicode / CJK / 多语言** 从设计之初即为一等公民——字符宽度计算、网格布局、UI 国际化全链路可验证、可配置。
+**GlyphTerm**（字形终端）是一款开源、**AI 友好**的现代终端与工作区。**Unicode / CJK / 多语言** 从设计之初即为一等公民——字符宽度、网格布局、主题与 UI 全链路可验证、可配置。
 
-> 终端里常见的中文显示异常，多数是 **显示层宽度与字体回退** 问题，而不是 UTF-8 数据损坏。GlyphTerm 用独立的宽度引擎 + 单元格网格渲染，避免混排（CJK + Emoji + ANSI + 制表符）时的列错位。
+> 终端里常见的中文错位，多数是 **显示层列宽与字体回退** 问题，而不是 UTF-8 损坏。GlyphTerm 用独立的 `glyphwidth` 引擎 + `glyphgrid` 单元格网格，避免 CJK、Emoji、ANSI、制表符混排时的列错位。
+
+[架构](./docs/ARCHITECTURE.md) · [CJK 渲染](./docs/CJK-RENDERING.md) · [开发环境](./docs/DEV_SETUP.md) · [主题](./docs/THEMES.md) · [许可证决策](./docs/LICENSING.md) · [参与贡献](./CONTRIBUTING.md)
+
+## 亮点
+
+| 维度 | 说明 |
+|------|------|
+| **CJK-first** | UAX #11 列宽策略 + 黄金回归测试 |
+| **Rust 核心** | PTY / VT / 网格与 UI 解耦，可复用 crate |
+| **桌面应用** | Tauri 2 + Canvas，多标签本地与 SSH |
+| **主题系统** | 7 套预设（字形 / Nord / Tokyo Night 等），持久化到本地 |
+| **本地优先** | 会话与数据默认留在本机，无需账号 |
+| **开源许可** | [Apache-2.0](./LICENSE) — 企业友好、含专利授权 |
+
+## 截图与主题
+
+标题栏 **主题** 下拉可切换配色；终端 ANSI / 真彩色会映射到当前主题盘，降低刺眼的高饱和色。
+
+详见 [docs/THEMES.md](./docs/THEMES.md)。
 
 ## 为什么叫 GlyphTerm
 
@@ -12,96 +34,89 @@
 |------|------|
 | **Glyph** | 强调「字形」正确显示：码点、宽度、连字、回退字体 |
 | **Term** | 终端 + 工作区（分屏、远程、预览、编辑） |
-| 中文名 | **字形终端** — 每个字符在网格里占几列，由引擎说了算，不靠 UI 猜 |
+| 中文名 | **字形终端** — 每个字符在网格里占几列，由引擎说了算 |
 
-## 核心能力（规划）
+## 当前能力
 
-| 能力 | 说明 |
+| 能力 | 状态 |
 |------|------|
-| 分屏 / 工作区 | Block + Tile 布局，终端、编辑、预览可组合 |
-| 远程连接 | SSH、远程文件浏览与编辑 |
-| 内联预览 | Markdown、图片、CSV 等 |
-| 内嵌浏览器 | 文档、仪表盘、内网应用 |
-| AI / Widget | 可选模块，本地或自托管 API |
-| **CJK / 混排** | 独立宽度引擎，宽字符与混排可回归测试 |
-| **UI 多语言** | 中 / 英 / 日界面 |
-| 本地优先 | 数据默认留在本机，无需账号 |
+| Unicode 列宽引擎 + 黄金测试 | ✅ M0 |
+| 单元格网格 + VT 解析 + CLI | ✅ M1 |
+| Tauri 桌面 + 滚动缓冲 + 选区复制 | ✅ M2 / M2.1 |
+| 多标签 + SSH + OSC 过滤 | ✅ M3.1 |
+| 可定制主题 + UI 变量 | ✅ |
+| 分屏 Block、主机配置、GPU 渲染 | 🔜 M3.2+ |
 
-## 技术栈（建议）
+## 技术栈
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  UI Shell: Tauri 2 (Rust) + React/TypeScript            │
-│  Blocks: Terminal · Editor · Preview · Web · AI         │
+│  UI: Tauri 2 + TypeScript (Canvas 终端视图)              │
 ├─────────────────────────────────────────────────────────┤
-│  Host: Rust (tokio) — SSH, FS, RPC, session             │
+│  Host: glyphterm-core — PTY、SSH、多标签会话             │
 ├─────────────────────────────────────────────────────────┤
-│  Terminal Core: glyphgrid + glyphwidth (Rust)           │
-│  VT parser · PTY · scrollback · selection               │
-├─────────────────────────────────────────────────────────┤
-│  Render: GPU cells (wgpu) or platform text (Phase 1)    │
+│  Core: glyphvt → glyphgrid ← glyphwidth                 │
 └─────────────────────────────────────────────────────────┘
 ```
 
-宽度与网格在 **Rust 核心** 中统一实现，UI 层只负责展示，不参与列宽计算。
+宽度与网格在 **Rust** 中统一实现；前端只负责主题映射与绘制，不参与列宽计算。详见 [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)。
 
-## 仓库结构
-
-```
-glyphterm/
-├── apps/glyphterm-cli/      # 本地 PTY 终端（开发版）
-├── crates/
-│   ├── glyphwidth/          # Unicode 显示宽度引擎
-│   ├── glyphgrid/           # 终端单元格网格
-│   └── glyphvt/             # VT 解析器
-├── docs/
-│   ├── ARCHITECTURE.md
-│   └── CJK-RENDERING.md
-└── .github/workflows/ci.yml
-```
-
-## 快速开始（开发）
+## 快速开始
 
 ```bash
-# 需要 Rust 1.85+（https://rustup.rs）
+# Rust 1.85+ — https://rustup.rs
+git clone https://github.com/cndingbo/glyphterm.git
 cd glyphterm
 cargo test --workspace
 
-# 本地终端（PTY + 网格渲染，开发用 CLI）
+# 开发 CLI
 cargo run -p glyphterm-cli
-# 退出：Ctrl+C
 
-# 桌面应用（Tauri 2，推荐）
+# 桌面应用（推荐）
 cd apps/glyphterm-desktop
 npm install
 npm run tauri dev
-
-# 快捷键：⌘T 新本地标签 · ⌘⇧N SSH · ⌘C 复制选区 · ⌘V 粘贴
 ```
 
-### 仓库结构（当前）
+**快捷键**：⌘T 新本地标签 · ⌘⇧N SSH · ⌘C 复制选区 · ⌘V 粘贴
+
+SSH 需系统 `libssh2`（macOS：`brew install libssh2`），见 [docs/SSH.md](./docs/SSH.md)。
+
+## 仓库结构
 
 | 路径 | 说明 |
 |------|------|
 | `crates/glyphwidth` | Unicode 列宽引擎 + 黄金测试 |
-| `crates/glyphgrid` | 终端单元格网格（宽字符、换行、擦除） |
-| `crates/glyphvt` | VT/xterm 子集解析器 |
-| `crates/glyphterm-core` | PTY 会话与 UI 帧序列化 |
-| `apps/glyphterm-cli` | 终端 CLI（crossterm） |
-| `apps/glyphterm-desktop` | **Tauri 2 桌面应用（M2）** |
-
-## 许可证
-
-[Apache-2.0](./LICENSE)
+| `crates/glyphgrid` | 终端单元格网格 |
+| `crates/glyphvt` | VT/xterm 解析（含 OSC 过滤） |
+| `crates/glyphterm-core` | PTY / SSH 会话与帧序列化 |
+| `apps/glyphterm-cli` | Crossterm 开发 CLI |
+| `apps/glyphterm-desktop` | Tauri 2 桌面应用 |
+| `apps/glyphterm-desktop/src/themes/` | 主题预设与色彩映射 |
+| `docs/` | 架构、CJK、主题、CI、Runner 文档 |
 
 ## 路线图
 
-1. **M0** — `glyphwidth` + 黄金测试集 ✅  
-2. **M1** — `glyphgrid` + `glyphvt` + `glyphterm-cli` ✅  
-3. **M2** — Tauri 桌面应用 + `glyphterm-core` + 滚动缓冲区 ✅  
-4. **M2.1** — 256/真彩色、选区复制、字体提示 ✅  
-5. **M3.1** — 多标签 + SSH 远程会话 ✅  
-6. **M3.2** — 分屏 Block 布局、主机配置持久化  
-7. **M4** — 文件预览、远程编辑、AI 块  
+1. **M0–M1** — 宽度引擎、网格、VT、CLI ✅  
+2. **M2–M2.1** — 桌面、真彩色、选区、字体提示 ✅  
+3. **M3.1** — 多标签、SSH ✅  
+4. **M3.2** — 分屏、主机配置持久化  
+5. **M4** — 预览、远程编辑、AI 块  
 
-详见 [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) 与 [docs/CJK-RENDERING.md](./docs/CJK-RENDERING.md)。
+## 参与与合规
+
+- 贡献指南：[CONTRIBUTING.md](./CONTRIBUTING.md)  
+- 行为准则：[CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md)  
+- 安全披露：[SECURITY.md](./SECURITY.md)  
+- **许可证**：[Apache-2.0](./LICENSE) — 选型理由见 [docs/LICENSING.md](./docs/LICENSING.md)  
+
+## 社区
+
+- **Issues**：[报告 Bug / 提议功能](https://github.com/cndingbo/glyphterm/issues/new/choose)  
+- **Discussions**：欢迎在 GitHub Discussions 交流用法与路线图（若已开启）  
+
+---
+
+<p align="center">
+  <sub>GlyphTerm — 让每个字形落在正确的格子里。</sub>
+</p>

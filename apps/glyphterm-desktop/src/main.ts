@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+import { listThemes, loadSavedTheme, saveTheme } from "./themes";
 import { checkCjkFonts, Frame, FramePayload, TerminalCanvas } from "./terminal";
 
 export interface TabInfo {
@@ -13,12 +14,40 @@ const tabBar = document.getElementById("tab-bar");
 const btnNewLocal = document.getElementById("btn-new-local");
 const btnNewSsh = document.getElementById("btn-new-ssh");
 const fontBanner = document.getElementById("font-banner");
+const themeSelect = document.getElementById(
+  "theme-select",
+) as HTMLSelectElement | null;
 
 if (!canvas || !tabBar) throw new Error("missing DOM");
 
 const term = new TerminalCanvas(canvas);
 let activeTabId = 0;
 const frameCache = new Map<number, Frame>();
+
+function initThemePicker() {
+  if (!themeSelect) return;
+  const active = loadSavedTheme();
+  themeSelect.innerHTML = "";
+  for (const t of listThemes()) {
+    const opt = document.createElement("option");
+    opt.value = t.id;
+    opt.textContent = `${t.nameZh} · ${t.name}`;
+    if (t.id === active.id) opt.selected = true;
+    themeSelect.appendChild(opt);
+  }
+  themeSelect.addEventListener("change", () => {
+    if (!saveTheme(themeSelect.value)) return;
+    term.applyMetricsFromTheme();
+    const frame = frameCache.get(activeTabId);
+    if (frame) term.render(frame);
+    if (activeTabId) {
+      const { cols, rows } = term.gridSize();
+      void invoke("terminal_resize", { cols, rows, tabId: activeTabId });
+    }
+  });
+}
+
+initThemePicker();
 
 async function refreshTabs() {
   const tabs = await invoke<TabInfo[]>("terminal_list_tabs");

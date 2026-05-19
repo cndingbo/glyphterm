@@ -1,0 +1,43 @@
+name: 功能建议
+description: 新能力或体验改进
+title: "[feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: 要解决什么问题？
+      description: 从用户场景描述，而非实现细节
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 建议方案
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: 相关领域
+      multiple: true
+      options:
+        - CJK / Unicode
+        - 终端 / VT
+        - 工作区 / 分屏
+        - SSH / 远程
+        - 主题 / UI
+        - AI / 插件
+        - 性能
+        - 文档
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: willing
+    attributes:
+      label: 参与
+      options:
+        - label: 我愿意提交 PR 实现或协助验证

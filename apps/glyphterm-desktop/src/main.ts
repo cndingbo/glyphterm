@@ -1,5 +1,6 @@
 import { bootClassic } from "./app/classic-app";
 import { bootWorkspace } from "./app/workspace-app";
+import { initI18n, wireLanguageSelector } from "./i18n";
 import { loadSavedTheme } from "./themes";
 
 const MODE_KEY = "glyphterm-ui-mode";
@@ -15,6 +16,8 @@ function wireModeToggle() {
   });
 }
 
+initI18n();
+wireLanguageSelector();
 loadSavedTheme();
 wireModeToggle();
 

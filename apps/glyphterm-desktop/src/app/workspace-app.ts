@@ -10,6 +10,7 @@ import {
   writeText,
 } from "../fs/client";
 import { applyMonacoThemeFromApp } from "../editor/monaco-theme";
+import { onLocaleChange, t, themeDisplayName } from "../i18n";
 import {
   getTheme,
   loadSavedTheme,
@@ -35,11 +36,11 @@ import {
   saveWorkspaceState,
 } from "../workspace/store";
 
-const ACTIVITIES: { id: ActivityId; label: string }[] = [
-  { id: "terminal", label: "terminal" },
-  { id: "files", label: "files" },
-  { id: "sysinfo", label: "sysinfo" },
-  { id: "process", label: "process" },
+const ACTIVITIES: ActivityId[] = [
+  "terminal",
+  "files",
+  "sysinfo",
+  "process",
 ];
 
 interface PaneRuntime {
@@ -90,7 +91,7 @@ export async function bootWorkspace() {
   if (splitBtn) {
     splitBtn.innerHTML = iconSplit;
     splitBtn.addEventListener("click", () => {
-      alert("下一版支持动态分屏；当前默认左右双块布局。");
+      alert(t("alerts.splitSoon"));
     });
   }
 
@@ -107,6 +108,16 @@ export async function bootWorkspace() {
       rt.terminal?.term.applyMetricsFromTheme();
       void rt.terminal?.resize();
       rt.editor?.reapplyTheme();
+    }
+  });
+
+  onLocaleChange(() => {
+    renderActivityRail();
+    populateThemePicker(themeSelect);
+    if (state.sidePanelOpen) renderSidePanel();
+    for (const rt of paneRuntimes.values()) {
+      rt.welcome?.refresh();
+      rt.terminal?.relocalizeIdle();
     }
   });
 
@@ -132,17 +143,25 @@ export async function bootWorkspace() {
     renderSidePanel();
   }
 
-  function initThemePicker(sel: HTMLSelectElement | null) {
+  function populateThemePicker(sel: HTMLSelectElement | null) {
     if (!sel) return;
-    const active = loadSavedTheme();
+    const active = getTheme();
+    const prev = sel.value;
     sel.innerHTML = "";
-    for (const t of listThemes()) {
+    for (const theme of listThemes()) {
       const opt = document.createElement("option");
-      opt.value = t.id;
-      opt.textContent = `${t.nameZh}`;
-      if (t.id === active.id) opt.selected = true;
+      opt.value = theme.id;
+      opt.textContent = themeDisplayName(theme);
+      if (theme.id === active.id) opt.selected = true;
       sel.appendChild(opt);
     }
+    if (prev) sel.value = prev;
+  }
+
+  function initThemePicker(sel: HTMLSelectElement | null) {
+    if (!sel) return;
+    loadSavedTheme();
+    populateThemePicker(sel);
     sel.addEventListener("change", () => {
       saveTheme(sel.value);
     });
@@ -166,15 +185,15 @@ export async function bootWorkspace() {
 
   function renderActivityRail() {
     rail.innerHTML = "";
-    for (const a of ACTIVITIES) {
+    for (const id of ACTIVITIES) {
       const btn = document.createElement("button");
       btn.type = "button";
-      btn.className = `rail-btn${state.activity === a.id ? " active" : ""}`;
-      btn.title = a.label;
-      btn.innerHTML = `<span class="rail-icon">${ACTIVITY_ICONS[a.id] ?? ""}</span><span class="rail-label">${a.label}</span>`;
+      btn.className = `rail-btn${state.activity === id ? " active" : ""}`;
+      btn.title = t(`activity.${id}`);
+      btn.innerHTML = `<span class="rail-icon">${ACTIVITY_ICONS[id] ?? ""}</span><span class="rail-label">${t(`activity.${id}`)}</span>`;
       btn.addEventListener("click", () => {
-        state.activity = a.id;
-        state.sidePanelOpen = a.id === "files" || a.id === "sysinfo";
+        state.activity = id;
+        state.sidePanelOpen = id === "files" || id === "sysinfo";
         persistAndRender();
       });
       rail.appendChild(btn);
@@ -224,7 +243,7 @@ export async function bootWorkspace() {
           <span class="pane-title">${escapeHtml(blockTitle(pane.block))}</span>
         </div>
         <span class="pane-actions">
-          <button type="button" class="pane-btn" data-action="focus" title="聚焦">${iconGear}</button>
+          <button type="button" class="pane-btn" data-action="focus" title="${escapeHtml(t("pane.focus"))}">${iconGear}</button>
         </span>`;
       chrome.querySelector("[data-action=focus]")?.addEventListener("click", () => {
         tab.activePaneId = pane.id;
@@ -300,7 +319,7 @@ export async function bootWorkspace() {
           const text = await readText(block.filePath);
           await ed.openFile(block.filePath, text);
         } catch (e) {
-          await ed.openFile(block.filePath, `// 无法读取: ${e}`);
+          await ed.openFile(block.filePath, t("errors.readFile", { error: String(e) }));
         }
       } else {
         welcome.show();
@@ -315,9 +334,9 @@ export async function bootWorkspace() {
     if (state.activity === "files") {
       void renderFileTree(sideContent);
     } else if (state.activity === "sysinfo") {
-      sideContent.innerHTML = `<div class="side-placeholder"><h3>系统信息</h3><p>下一版接入 CPU / 内存 / 磁盘指标。</p></div>`;
+      sideContent.innerHTML = `<div class="side-placeholder"><h3>${escapeHtml(t("sysinfo.title"))}</h3><p>${escapeHtml(t("sysinfo.body"))}</p></div>`;
     } else {
-      sideContent.innerHTML = `<div class="side-placeholder"><p>即将推出</p></div>`;
+      sideContent.innerHTML = `<div class="side-placeholder"><p>${escapeHtml(t("placeholder.comingSoon"))}</p></div>`;
     }
   }
 
@@ -325,7 +344,7 @@ export async function bootWorkspace() {
     const root = await getWorkspaceRoot();
     const header = document.createElement("div");
     header.className = "files-header";
-    header.textContent = "资源管理器";
+    header.textContent = t("explorer.title");
     const sub = document.createElement("div");
     sub.className = "files-root";
     sub.title = root;
@@ -389,7 +408,7 @@ export async function bootWorkspace() {
         const text = await readText(path);
         await rt.editor.openFile(path, text);
       } catch (e) {
-        await rt.editor.openFile(path, `// 无法读取: ${e}`);
+        await rt.editor.openFile(path, t("errors.readFile", { error: String(e) }));
       }
       stage.querySelectorAll(".ws-pane").forEach((el) => {
         el.classList.toggle(
@@ -404,8 +423,8 @@ export async function bootWorkspace() {
   }
 
   function blockTitle(block: Block): string {
-    if (block.kind === "terminal") return block.title || "terminal";
-    return block.title || block.filePath || "editor";
+    if (block.kind === "terminal") return block.title || t("pane.local");
+    return block.title || block.filePath || t("pane.welcome");
   }
 
   async function wsNewLocal() {
@@ -425,11 +444,11 @@ export async function bootWorkspace() {
   }
 
   async function wsNewSsh() {
-    const host = prompt("SSH 主机:");
+    const host = prompt(t("ssh.host"));
     if (!host) return;
-    const user = prompt("用户名:", "root") ?? "root";
-    const port = Number(prompt("端口:", "22") ?? "22") || 22;
-    const password = prompt("密码:") ?? "";
+    const user = prompt(t("ssh.user"), "root") ?? "root";
+    const port = Number(prompt(t("ssh.port"), "22") ?? "22") || 22;
+    const password = prompt(t("ssh.password")) ?? "";
     const tab = activeTab(state);
     const pane = tab.layout.panes.find((p) => p.block.kind === "terminal");
     if (!pane || pane.block.kind !== "terminal") return;
@@ -452,7 +471,7 @@ export async function bootWorkspace() {
       rt.terminal.focus();
       updatePaneTitle(pane.id, host);
     } catch (e) {
-      alert(`SSH 失败: ${e}`);
+      alert(t("ssh.failed", { error: String(e) }));
     }
   }
 

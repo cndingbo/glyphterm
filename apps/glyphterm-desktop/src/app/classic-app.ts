@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+import { onLocaleChange, t, themeDisplayName } from "../i18n";
 import { listThemes, loadSavedTheme, saveTheme } from "../themes";
 import { checkCjkFonts, Frame, FramePayload, TerminalCanvas } from "../terminal";
 
@@ -41,11 +42,11 @@ export async function bootClassic() {
     if (!themeSelect) return;
     const active = loadSavedTheme();
     themeSelect.innerHTML = "";
-    for (const t of listThemes()) {
+    for (const theme of listThemes()) {
       const opt = document.createElement("option");
-      opt.value = t.id;
-      opt.textContent = `${t.nameZh} · ${t.name}`;
-      if (t.id === active.id) opt.selected = true;
+      opt.value = theme.id;
+      opt.textContent = themeDisplayName(theme);
+      if (theme.id === active.id) opt.selected = true;
       themeSelect.appendChild(opt);
     }
     themeSelect.addEventListener("change", () => {
@@ -61,6 +62,13 @@ export async function bootClassic() {
   }
 
   initThemePicker();
+
+  onLocaleChange(() => {
+    initThemePicker();
+    if (fontBanner && !fontBanner.hidden) {
+      fontBanner.textContent = t("font.banner");
+    }
+  });
 
   async function refreshTabs() {
     const tabs = await invoke<TabInfo[]>("terminal_list_tabs");
@@ -130,11 +138,11 @@ export async function bootClassic() {
   btnNewLocal?.addEventListener("click", () => void newLocalTab());
   btnNewSsh?.addEventListener("click", () => {
     void (async () => {
-      const host = prompt("SSH 主机:");
+      const host = prompt(t("ssh.host"));
       if (!host) return;
-      const user = prompt("用户名:", "root") ?? "root";
-      const port = Number(prompt("端口:", "22") ?? "22") || 22;
-      const password = prompt("密码:") ?? "";
+      const user = prompt(t("ssh.user"), "root") ?? "root";
+      const port = Number(prompt(t("ssh.port"), "22") ?? "22") || 22;
+      const password = prompt(t("ssh.password")) ?? "";
       const { cols, rows } = term.gridSize();
       try {
         activeTabId = await invoke<number>("terminal_tab_new_ssh", {
@@ -148,7 +156,7 @@ export async function bootClassic() {
         await refreshTabs();
         term.focus();
       } catch (e) {
-        alert(`SSH 失败: ${e}`);
+        alert(t("ssh.failed", { error: String(e) }));
       }
     })();
   });
@@ -172,8 +180,7 @@ export async function bootClassic() {
 
   if (fontBanner && !checkCjkFonts()) {
     fontBanner.hidden = false;
-    fontBanner.textContent =
-      "建议安装 CJK 等宽字体：brew install --cask font-sarasa-gothic";
+    fontBanner.textContent = t("font.banner");
   }
 
   await listen<FramePayload>("terminal-frame", (event) => {

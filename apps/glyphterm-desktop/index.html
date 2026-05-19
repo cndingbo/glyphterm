@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-Hans">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -11,28 +11,30 @@
     <main id="app">
       <header class="titlebar">
         <div class="brand">
-          <span class="brand-mark" aria-hidden="true">字</span>
+          <span class="brand-mark" data-i18n="app.brandMark" aria-hidden="true">G</span>
           <span class="logo">GlyphTerm</span>
         </div>
-        <span class="hint">字形终端 · 工作区</span>
+        <span class="hint" data-i18n="app.hint">CJK-first terminal · Workspace</span>
         <div class="titlebar-spacer"></div>
         <div class="titlebar-actions ui-mode-toggle">
-          <label for="ui-mode">界面</label>
-          <select id="ui-mode" title="经典终端 / Wave 工作区">
-            <option value="workspace">工作区</option>
-            <option value="classic">经典</option>
+          <label for="ui-locale" data-i18n="settings.language">Language</label>
+          <select id="ui-locale" title="English / 简体中文"></select>
+          <label for="ui-mode" data-i18n="settings.uiMode">Layout</label>
+          <select id="ui-mode" data-i18n-title="settings.uiModeTitle" title="Classic or workspace">
+            <option value="workspace" data-i18n-option="uiMode.workspace">Workspace</option>
+            <option value="classic" data-i18n-option="uiMode.classic">Classic</option>
           </select>
           <div class="theme-picker">
-            <label for="theme-select-ws">主题</label>
-            <select id="theme-select-ws" title="配色主题"></select>
+            <label for="theme-select-ws" data-i18n="settings.theme">Theme</label>
+            <select id="theme-select-ws" data-i18n-title="settings.themeTitle" title="Color theme"></select>
           </div>
           <span id="workspace-titlebar-actions" class="workspace-titlebar-actions">
-            <button type="button" id="btn-ws-new-local" class="btn-sm">+ 本地</button>
-            <button type="button" id="btn-ws-new-ssh" class="btn-sm">+ SSH</button>
+            <button type="button" id="btn-ws-new-local" class="btn-sm" data-i18n="actions.newLocal" data-i18n-title="actions.newLocalTitle">+ Local</button>
+            <button type="button" id="btn-ws-new-ssh" class="btn-sm" data-i18n="actions.newSsh" data-i18n-title="actions.newSshTitle">+ SSH</button>
           </span>
           <span id="classic-titlebar-actions" class="classic-titlebar-actions" hidden>
-            <button type="button" id="btn-new-local" class="btn-sm" title="新标签 (⌘T)">+ 本地</button>
-            <button type="button" id="btn-new-ssh" class="btn-sm" title="SSH (⌘⇧N)">+ SSH</button>
+            <button type="button" id="btn-new-local" class="btn-sm" data-i18n="actions.newLocal" data-i18n-title="actions.newLocalTitle">+ Local</button>
+            <button type="button" id="btn-new-ssh" class="btn-sm" data-i18n="actions.newSsh" data-i18n-title="actions.newSshTitle">+ SSH</button>
             <select id="theme-select" hidden></select>
           </span>
         </div>
@@ -40,13 +42,13 @@
 
       <div id="workspace-shell" class="workspace-shell" hidden>
         <div class="workspace-top">
-          <nav id="ws-tab-bar" class="ws-tab-bar" aria-label="工作区标签"></nav>
-          <button type="button" id="btn-ws-tab-add" class="ws-tab-add" title="新工作区标签">+</button>
-          <button type="button" id="btn-split-h" class="btn-icon" title="分屏布局">⊞</button>
+          <nav id="ws-tab-bar" class="ws-tab-bar" data-i18n-aria="a11y.workspaceTabs" aria-label="Workspace tabs"></nav>
+          <button type="button" id="btn-ws-tab-add" class="ws-tab-add" data-i18n-title="actions.newWorkspaceTab" title="New workspace tab">+</button>
+          <button type="button" id="btn-split-h" class="btn-icon" data-i18n-title="actions.splitLayout" title="Split layout">⊞</button>
           <span id="workspace-path" class="workspace-path"></span>
         </div>
         <div class="workspace-body">
-          <nav id="activity-rail" class="activity-rail" aria-label="活动栏"></nav>
+          <nav id="activity-rail" class="activity-rail" data-i18n-aria="a11y.activityBar" aria-label="Activity bar"></nav>
           <aside id="side-panel" class="side-panel" hidden>
             <div id="side-panel-content"></div>
           </aside>
@@ -55,7 +57,7 @@
       </div>
 
       <div id="classic-shell" hidden>
-        <nav id="tab-bar" class="tab-bar" aria-label="终端标签"></nav>
+        <nav id="tab-bar" class="tab-bar" data-i18n-aria="a11y.terminalTabs" aria-label="Terminal tabs"></nav>
         <p id="font-banner" class="font-banner" hidden></p>
         <div id="terminal-wrap">
           <canvas id="terminal" tabindex="0"></canvas>

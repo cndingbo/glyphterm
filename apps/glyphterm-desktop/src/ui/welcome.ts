@@ -1,27 +1,35 @@
+import { t } from "../i18n";
+
 /** Editor empty state — shown until a file is opened. */
 
 export interface WelcomePanel {
   el: HTMLElement;
   show: () => void;
   hide: () => void;
+  refresh: () => void;
 }
 
 export function createWelcomePanel(): WelcomePanel {
   const el = document.createElement("div");
   el.className = "editor-welcome";
-  el.innerHTML = `
+
+  function render() {
+    el.innerHTML = `
     <div class="welcome-glow" aria-hidden="true"></div>
     <div class="welcome-content">
-      <p class="welcome-eyebrow">GlyphTerm Editor</p>
-      <h2 class="welcome-title">专业代码编辑</h2>
-      <p class="welcome-desc">Monaco 内核 · 与 VS Code / Cursor 同源 · 支持 ⌘S 保存</p>
+      <p class="welcome-eyebrow">${t("welcome.eyebrow")}</p>
+      <h2 class="welcome-title">${t("welcome.title")}</h2>
+      <p class="welcome-desc">${t("welcome.desc")}</p>
       <ul class="welcome-shortcuts">
-        <li><kbd>⌘S</kbd><span>保存文件</span></li>
-        <li><kbd>files</kbd><span>侧栏浏览项目</span></li>
-        <li><kbd>⊞</kbd><span>分屏（即将支持拖拽）</span></li>
+        <li><kbd>⌘S</kbd><span>${t("welcome.shortcutSave")}</span></li>
+        <li><kbd>files</kbd><span>${t("welcome.shortcutFiles")}</span></li>
+        <li><kbd>⊞</kbd><span>${t("welcome.shortcutSplit")}</span></li>
       </ul>
     </div>
   `;
+  }
+
+  render();
 
   return {
     el,
@@ -31,5 +39,6 @@ export function createWelcomePanel(): WelcomePanel {
     hide: () => {
       el.hidden = true;
     },
+    refresh: render,
   };
 }

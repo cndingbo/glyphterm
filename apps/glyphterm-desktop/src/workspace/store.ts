@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import type { Block, Pane, WorkspaceState, WorkspaceTab } from "./types";
 
 const STORAGE_KEY = "glyphterm-workspace-v1";
@@ -14,7 +15,9 @@ export function createEditorBlock(filePath: string | null = null): Block {
   return {
     kind: "editor",
     filePath,
-    title: filePath ? filePath.split(/[/\\]/).pop() ?? "editor" : "欢迎",
+    title: filePath
+      ? filePath.split(/[/\\]/).pop() ?? "editor"
+      : t("pane.welcome"),
   };
 }
 

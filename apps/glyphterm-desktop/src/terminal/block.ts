@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import { t } from "../i18n";
 import { Frame, TerminalCanvas } from "../terminal";
 
 /** One terminal block bound to a PTY tab. */
@@ -11,16 +12,26 @@ export class TerminalBlockView {
     this.host.classList.add("terminal-host");
     const idle = document.createElement("div");
     idle.className = "terminal-idle";
-    idle.innerHTML = `
-      <span class="terminal-idle-prompt">字形终端</span>
-      <span class="terminal-idle-hint">输入命令开始 · CJK 宽度由引擎保证</span>
-      <span class="terminal-idle-cursor" aria-hidden="true"></span>`;
+    this.refreshIdle(idle);
     this.canvas = document.createElement("canvas");
     this.canvas.className = "block-terminal-canvas";
     this.canvas.tabIndex = 0;
     this.host.append(idle, this.canvas);
     this.term = new TerminalCanvas(this.canvas);
     this.wireInput();
+  }
+
+  private refreshIdle(idle: HTMLElement) {
+    idle.innerHTML = `
+      <span class="terminal-idle-prompt">${t("terminal.idlePrompt")}</span>
+      <span class="terminal-idle-hint">${t("terminal.idleHint")}</span>
+      <span class="terminal-idle-cursor" aria-hidden="true"></span>`;
+  }
+
+  /** Update copy when locale changes. */
+  relocalizeIdle() {
+    const idle = this.host.querySelector(".terminal-idle");
+    if (idle) this.refreshIdle(idle as HTMLElement);
   }
 
   private hideIdle() {

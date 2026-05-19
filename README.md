@@ -82,7 +82,7 @@ npm run tauri dev
 
 **快捷键**：⌘T 新本地标签 · ⌘⇧N SSH · ⌘C 复制选区 · ⌘V 粘贴 · 编辑器内 ⌘S 保存
 
-默认启动 **工作区模式**（左终端 + 右 Monaco 编辑器）；标题栏 **界面 → 经典** 可切回单终端。
+Default UI is **English**; switch **Language** in the title bar (简体中文 / English). Workspace mode starts with terminal + Monaco side by side; use **Layout → Classic** for the single-pane terminal.
 
 SSH 需系统 `libssh2`（macOS：`brew install libssh2`），见 [docs/SSH.md](./docs/SSH.md)。
 

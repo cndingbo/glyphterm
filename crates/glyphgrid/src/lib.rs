@@ -361,21 +361,24 @@ impl Grid {
     }
 
     /// Render grid rows to plain text (for debugging / tests).
+    /// Skips NUL padding cells and trailing empty lines.
     pub fn dump_plain(&self) -> String {
-        let mut out = String::new();
+        let mut lines = Vec::with_capacity(self.rows as usize);
         for r in 0..self.rows {
+            let mut line = String::new();
             for c in 0..self.cols {
                 if let Some(cell) = self.cell(c, r) {
-                    if !cell.wide_continuation {
-                        out.push(cell.ch);
+                    if !cell.wide_continuation && cell.ch != '\0' {
+                        line.push(cell.ch);
                     }
                 }
             }
-            if r + 1 < self.rows {
-                out.push('\n');
-            }
+            lines.push(line);
         }
-        out
+        while lines.last().is_some_and(|l| l.is_empty()) {
+            lines.pop();
+        }
+        lines.join("\n")
     }
 }
 

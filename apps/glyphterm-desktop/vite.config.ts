@@ -1,6 +1,9 @@
 import { defineConfig } from "vite";
 
 export default defineConfig({
+  optimizeDeps: {
+    include: ["monaco-editor"],
+  },
   clearScreen: false,
   server: {
     port: 1420,

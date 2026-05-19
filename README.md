@@ -9,7 +9,7 @@
 
 > 终端里常见的中文错位，多数是 **显示层列宽与字体回退** 问题，而不是 UTF-8 损坏。GlyphTerm 用独立的 `glyphwidth` 引擎 + `glyphgrid` 单元格网格，避免 CJK、Emoji、ANSI、制表符混排时的列错位。
 
-[架构](./docs/ARCHITECTURE.md) · [CJK 渲染](./docs/CJK-RENDERING.md) · [开发环境](./docs/DEV_SETUP.md) · [主题](./docs/THEMES.md) · [许可证决策](./docs/LICENSING.md) · [参与贡献](./CONTRIBUTING.md)
+[架构](./docs/ARCHITECTURE.md) · [工作区](./docs/WORKSPACE.md) · [CJK 渲染](./docs/CJK-RENDERING.md) · [开发环境](./docs/DEV_SETUP.md) · [主题](./docs/THEMES.md) · [许可证](./docs/LICENSING.md) · [贡献](./CONTRIBUTING.md)
 
 ## 亮点
 
@@ -45,7 +45,9 @@
 | Tauri 桌面 + 滚动缓冲 + 选区复制 | ✅ M2 / M2.1 |
 | 多标签 + SSH + OSC 过滤 | ✅ M3.1 |
 | 可定制主题 + UI 变量 | ✅ |
-| 分屏 Block、主机配置、GPU 渲染 | 🔜 M3.2+ |
+| **Wave 工作区** + Monaco 编辑器 | ✅ M3.2 α |
+| 动态分屏 / LSP / AI 块 | 🔜 M3.3+ |
+| 主机配置、GPU 渲染 | 🔜 |
 
 ## 技术栈
 
@@ -78,7 +80,9 @@ npm install
 npm run tauri dev
 ```
 
-**快捷键**：⌘T 新本地标签 · ⌘⇧N SSH · ⌘C 复制选区 · ⌘V 粘贴
+**快捷键**：⌘T 新本地标签 · ⌘⇧N SSH · ⌘C 复制选区 · ⌘V 粘贴 · 编辑器内 ⌘S 保存
+
+默认启动 **工作区模式**（左终端 + 右 Monaco 编辑器）；标题栏 **界面 → 经典** 可切回单终端。
 
 SSH 需系统 `libssh2`（macOS：`brew install libssh2`），见 [docs/SSH.md](./docs/SSH.md)。
 

@@ -36,6 +36,20 @@ body {
   height: 100vh;
 }
 
+#workspace-shell:not([hidden]),
+#classic-shell:not([hidden]) {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.classic-titlebar-actions {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+
 .titlebar {
   display: flex;
   align-items: center;

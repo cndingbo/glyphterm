@@ -5,26 +5,54 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>GlyphTerm</title>
     <link rel="stylesheet" href="/src/styles.css" />
+    <link rel="stylesheet" href="/src/workspace/workspace.css" />
   </head>
   <body>
     <main id="app">
       <header class="titlebar">
         <span class="logo">GlyphTerm</span>
-        <span class="hint">字形终端 · CJK-first</span>
+        <span class="hint">字形终端 · 工作区</span>
         <div class="titlebar-spacer"></div>
-        <div class="titlebar-actions">
+        <div class="titlebar-actions ui-mode-toggle">
+          <label for="ui-mode">界面</label>
+          <select id="ui-mode" title="经典终端 / Wave 工作区">
+            <option value="workspace">工作区</option>
+            <option value="classic">经典</option>
+          </select>
           <div class="theme-picker">
-            <label for="theme-select">主题</label>
-            <select id="theme-select" title="终端配色主题"></select>
+            <label for="theme-select-ws">主题</label>
+            <select id="theme-select-ws" title="配色主题"></select>
           </div>
-          <button type="button" id="btn-new-local" class="btn-sm" title="新标签 (⌘T)">+ 本地</button>
-          <button type="button" id="btn-new-ssh" class="btn-sm" title="SSH (⌘⇧N)">+ SSH</button>
+          <span id="classic-titlebar-actions" class="classic-titlebar-actions" hidden>
+            <button type="button" id="btn-new-local" class="btn-sm" title="新标签 (⌘T)">+ 本地</button>
+            <button type="button" id="btn-new-ssh" class="btn-sm" title="SSH (⌘⇧N)">+ SSH</button>
+            <select id="theme-select" hidden></select>
+          </span>
         </div>
       </header>
-      <nav id="tab-bar" class="tab-bar" aria-label="终端标签"></nav>
-      <p id="font-banner" class="font-banner" hidden></p>
-      <div id="terminal-wrap">
-        <canvas id="terminal" tabindex="0"></canvas>
+
+      <div id="workspace-shell" class="workspace-shell" hidden>
+        <div class="workspace-top">
+          <nav id="ws-tab-bar" class="ws-tab-bar" aria-label="工作区标签"></nav>
+          <button type="button" id="btn-ws-tab-add" class="ws-tab-add" title="新工作区标签">+</button>
+          <button type="button" id="btn-split-h" class="btn-sm" title="分屏">⊞</button>
+          <span id="workspace-path" class="workspace-path"></span>
+        </div>
+        <div class="workspace-body">
+          <nav id="activity-rail" class="activity-rail" aria-label="活动栏"></nav>
+          <aside id="side-panel" class="side-panel" hidden>
+            <div id="side-panel-content"></div>
+          </aside>
+          <section id="workspace-stage" class="workspace-stage"></section>
+        </div>
+      </div>
+
+      <div id="classic-shell" hidden>
+        <nav id="tab-bar" class="tab-bar" aria-label="终端标签"></nav>
+        <p id="font-banner" class="font-banner" hidden></p>
+        <div id="terminal-wrap">
+          <canvas id="terminal" tabindex="0"></canvas>
+        </div>
       </div>
     </main>
     <script type="module" src="/src/main.ts"></script>

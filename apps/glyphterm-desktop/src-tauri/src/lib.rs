@@ -1,10 +1,15 @@
+mod fs_api;
+
+use fs_api::{default_workspace_root, list_directory, read_text_file, write_text_file, FsEntry};
 use glyphterm_core::{FramePayload, SessionManager, TabInfo};
 use parking_lot::Mutex;
+use std::path::PathBuf;
 use std::time::Duration;
 use tauri::{AppHandle, Emitter, Manager, State};
 
 struct AppState {
     manager: Mutex<SessionManager>,
+    workspace_root: Mutex<PathBuf>,
 }
 
 fn resolve_tab(state: &State<'_, AppState>, tab_id: Option<u64>) -> Result<u64, String> {
@@ -155,6 +160,50 @@ fn terminal_selection_clear(
 }
 
 #[tauri::command]
+fn workspace_get_root(state: State<'_, AppState>) -> Result<String, String> {
+    Ok(state
+        .workspace_root
+        .lock()
+        .to_string_lossy()
+        .into_owned())
+}
+
+#[tauri::command]
+fn workspace_set_root(state: State<'_, AppState>, path: String) -> Result<String, String> {
+    let canon = PathBuf::from(&path)
+        .canonicalize()
+        .map_err(|e| format!("invalid workspace path: {e}"))?;
+    if !canon.is_dir() {
+        return Err("workspace must be a directory".into());
+    }
+    *state.workspace_root.lock() = canon.clone();
+    Ok(canon.to_string_lossy().into_owned())
+}
+
+#[tauri::command]
+fn fs_list_dir(state: State<'_, AppState>, path: Option<String>) -> Result<Vec<FsEntry>, String> {
+    let root = state.workspace_root.lock().clone();
+    let p = path.unwrap_or_else(|| root.to_string_lossy().into_owned());
+    list_directory(&root, &p)
+}
+
+#[tauri::command]
+fn fs_read_text(state: State<'_, AppState>, path: String) -> Result<String, String> {
+    let root = state.workspace_root.lock().clone();
+    read_text_file(&root, &path)
+}
+
+#[tauri::command]
+fn fs_write_text(
+    state: State<'_, AppState>,
+    path: String,
+    content: String,
+) -> Result<(), String> {
+    let root = state.workspace_root.lock().clone();
+    write_text_file(&root, &path, &content)
+}
+
+#[tauri::command]
 fn terminal_copy_selection(
     state: State<'_, AppState>,
     tab_id: Option<u64>,
@@ -192,6 +241,7 @@ pub fn run() {
     tauri::Builder::default()
         .manage(AppState {
             manager: Mutex::new(SessionManager::new()),
+            workspace_root: Mutex::new(default_workspace_root()),
         })
         .setup(|app| {
             spawn_frame_loop(app.handle().clone());
@@ -209,6 +259,11 @@ pub fn run() {
             terminal_selection_update,
             terminal_selection_clear,
             terminal_copy_selection,
+            workspace_get_root,
+            workspace_set_root,
+            fs_list_dir,
+            fs_read_text,
+            fs_write_text,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

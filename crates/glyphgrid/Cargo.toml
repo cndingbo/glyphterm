@@ -1,0 +1,11 @@
+[package]
+name = "glyphgrid"
+description = "Cell-based terminal grid with wide-character support for GlyphTerm"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+glyphwidth = { path = "../glyphwidth" }

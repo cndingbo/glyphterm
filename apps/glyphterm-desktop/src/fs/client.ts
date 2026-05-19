@@ -6,6 +6,12 @@ export interface FsEntry {
   is_dir: boolean;
 }
 
+export interface FsSearchHit {
+  path: string;
+  name: string;
+  relative: string;
+}
+
 export async function getWorkspaceRoot(): Promise<string> {
   return invoke<string>("workspace_get_root");
 }
@@ -16,6 +22,13 @@ export async function setWorkspaceRoot(path: string): Promise<string> {
 
 export async function listDir(path?: string): Promise<FsEntry[]> {
   return invoke<FsEntry[]>("fs_list_dir", { path: path ?? null });
+}
+
+export async function searchFiles(
+  query: string,
+  limit = 50,
+): Promise<FsSearchHit[]> {
+  return invoke<FsSearchHit[]>("fs_search_files", { query, limit });
 }
 
 export async function readText(path: string): Promise<string> {

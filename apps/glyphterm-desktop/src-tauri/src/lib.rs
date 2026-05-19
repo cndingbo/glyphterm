@@ -1,6 +1,9 @@
 mod fs_api;
 
-use fs_api::{default_workspace_root, list_directory, read_text_file, write_text_file, FsEntry};
+use fs_api::{
+    default_workspace_root, list_directory, read_text_file, search_files, write_text_file,
+    FsEntry, FsSearchHit,
+};
 use glyphterm_core::{FramePayload, SessionManager, TabInfo};
 use parking_lot::Mutex;
 use std::path::PathBuf;
@@ -204,6 +207,16 @@ fn fs_write_text(
 }
 
 #[tauri::command]
+fn fs_search_files(
+    state: State<'_, AppState>,
+    query: String,
+    limit: Option<usize>,
+) -> Result<Vec<FsSearchHit>, String> {
+    let root = state.workspace_root.lock().clone();
+    search_files(&root, &query, limit.unwrap_or(50))
+}
+
+#[tauri::command]
 fn terminal_copy_selection(
     state: State<'_, AppState>,
     tab_id: Option<u64>,
@@ -264,6 +277,7 @@ pub fn run() {
             fs_list_dir,
             fs_read_text,
             fs_write_text,
+            fs_search_files,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

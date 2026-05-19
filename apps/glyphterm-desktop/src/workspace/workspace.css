@@ -674,3 +674,54 @@ body.ws-split-dragging-row {
 [data-theme="paper"] .titlebar {
   backdrop-filter: blur(12px);
 }
+
+/* IDE status bar */
+.workspace-statusbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 10px;
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+  border-top: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.status-spacer {
+  flex: 1;
+}
+
+.status-item {
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  max-width: min(480px, 55vw);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-workspace {
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+  transition: background var(--duration-fast);
+}
+
+.status-workspace:hover {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.status-file {
+  color: var(--text-subtle);
+}
+
+.status-layout {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}

@@ -93,6 +93,142 @@ pub fn read_text_file(root: &Path, path: &str) -> Result<String, String> {
     std::fs::read_to_string(&file).map_err(|e| e.to_string())
 }
 
+#[derive(Debug, Clone, Serialize)]
+pub struct FsSearchHit {
+    pub path: String,
+    pub name: String,
+    pub relative: String,
+}
+
+const SKIP_DIR_NAMES: &[&str] = &[
+    ".git",
+    "node_modules",
+    "target",
+    "dist",
+    "build",
+    "__pycache__",
+    ".next",
+    ".turbo",
+    "coverage",
+    ".cache",
+    "vendor",
+    ".idea",
+    ".vscode",
+    "out",
+];
+
+const MAX_SCAN_ENTRIES: usize = 14_000;
+
+fn should_skip_dir(name: &str) -> bool {
+    SKIP_DIR_NAMES.contains(&name)
+}
+
+fn matches_query(name: &str, relative: &str, query: &str) -> bool {
+    if query.is_empty() {
+        return true;
+    }
+    let q = query.to_lowercase();
+    name.to_lowercase().contains(&q) || relative.to_lowercase().contains(&q)
+}
+
+fn score_hit(name: &str, relative: &str, query: &str) -> i32 {
+    if query.is_empty() {
+        return 1;
+    }
+    let q = query.to_lowercase();
+    let name_l = name.to_lowercase();
+    let rel_l = relative.to_lowercase();
+    if name_l == q {
+        return 100;
+    }
+    if name_l.starts_with(&q) {
+        return 80;
+    }
+    if name_l.contains(&q) {
+        return 60;
+    }
+    if rel_l.contains(&q) {
+        return 40;
+    }
+    0
+}
+
+fn search_dir(
+    root: &Path,
+    dir: &Path,
+    relative: &str,
+    query: &str,
+    hits: &mut Vec<FsSearchHit>,
+    scanned: &mut usize,
+    max_results: usize,
+) {
+    if hits.len() >= max_results || *scanned >= MAX_SCAN_ENTRIES {
+        return;
+    }
+    let read = match std::fs::read_dir(dir) {
+        Ok(r) => r,
+        Err(_) => return,
+    };
+    for item in read.flatten() {
+        if hits.len() >= max_results || *scanned >= MAX_SCAN_ENTRIES {
+            break;
+        }
+        *scanned += 1;
+        let name = item.file_name().to_string_lossy().into_owned();
+        if name.starts_with('.') {
+            continue;
+        }
+        let path = item.path();
+        let Ok(meta) = item.metadata() else {
+            continue;
+        };
+        if meta.is_dir() {
+            if should_skip_dir(&name) {
+                continue;
+            }
+            let child_rel = if relative.is_empty() {
+                name.clone()
+            } else {
+                format!("{relative}/{name}")
+            };
+            search_dir(root, &path, &child_rel, query, hits, scanned, max_results);
+        } else if meta.is_file() {
+            if !matches_query(&name, relative, query) {
+                continue;
+            }
+            let rel = if relative.is_empty() {
+                name.clone()
+            } else {
+                format!("{relative}/{name}")
+            };
+            hits.push(FsSearchHit {
+                path: path.to_string_lossy().into_owned(),
+                name,
+                relative: rel,
+            });
+        }
+    }
+}
+
+/// Fuzzy file search under workspace root (for Quick Open).
+pub fn search_files(root: &Path, query: &str, limit: usize) -> Result<Vec<FsSearchHit>, String> {
+    let root = root
+        .canonicalize()
+        .map_err(|e| format!("workspace root invalid: {e}"))?;
+    let q = query.trim();
+    let limit = limit.clamp(1, 200);
+    let mut hits = Vec::new();
+    let mut scanned = 0;
+    search_dir(&root, &root, "", q, &mut hits, &mut scanned, limit * 4);
+    let mut scored: Vec<(i32, FsSearchHit)> = hits
+        .into_iter()
+        .map(|h| (score_hit(&h.name, &h.relative, q), h))
+        .filter(|(s, _)| *s > 0)
+        .collect();
+    scored.sort_by(|a, b| b.0.cmp(&a.0).then_with(|| a.1.relative.cmp(&b.1.relative)));
+    Ok(scored.into_iter().take(limit).map(|(_, h)| h).collect())
+}
+
 pub fn write_text_file(root: &Path, path: &str, content: &str) -> Result<(), String> {
     let file = resolve_under_root(root, path)?;
     if file.is_dir() {

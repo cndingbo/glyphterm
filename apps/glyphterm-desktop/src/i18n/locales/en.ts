@@ -38,6 +38,28 @@ export const en = {
     openWorkspace: "Switch to workspace layout",
     themePrefix: "Theme:",
     languagePrefix: "Language:",
+    quickOpen: "File: Quick Open",
+    changeWorkspace: "Workspace: Change folder",
+    showCommands: "Show command palette",
+  },
+  quickOpen: {
+    label: "Go to file",
+    placeholder: "Search by file name or path…",
+    hint: "↑↓ select · Enter open · Esc close",
+    typeToSearch: "Type to search files in the workspace",
+    empty: "No matching files",
+  },
+  status: {
+    noFile: "No file open",
+    terminalActive: "Terminal focused",
+    splitHorizontal: "horizontal",
+    splitVertical: "vertical",
+    layout: "Split {pct}% · {axis}",
+    layoutTitle: "Pane split ratio and direction",
+    changeWorkspaceTitle: "Click to change workspace folder",
+  },
+  workspace: {
+    changePrompt: "Workspace folder path:",
   },
   a11y: {
     workspaceTabs: "Workspace tabs",
@@ -74,6 +96,8 @@ export const en = {
     shortcutSave: "Save file",
     shortcutFiles: "Browse project in sidebar",
     shortcutSplit: "Drag the gutter between panes to resize",
+    shortcutPalette: "Command palette",
+    shortcutQuickOpen: "Quick Open — go to file",
   },
   terminal: {
     idlePrompt: "GlyphTerm",

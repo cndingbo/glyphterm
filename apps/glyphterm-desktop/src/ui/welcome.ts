@@ -22,7 +22,8 @@ export function createWelcomePanel(): WelcomePanel {
       <p class="welcome-desc">${t("welcome.desc")}</p>
       <ul class="welcome-shortcuts">
         <li><kbd>⌘S</kbd><span>${t("welcome.shortcutSave")}</span></li>
-        <li><kbd>files</kbd><span>${t("welcome.shortcutFiles")}</span></li>
+        <li><kbd>⌘P</kbd><span>${t("welcome.shortcutQuickOpen")}</span></li>
+        <li><kbd>⌘K</kbd><span>${t("welcome.shortcutPalette")}</span></li>
         <li><kbd>⊞</kbd><span>${t("welcome.shortcutSplit")}</span></li>
       </ul>
     </div>

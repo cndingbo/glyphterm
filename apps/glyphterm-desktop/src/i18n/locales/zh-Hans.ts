@@ -40,6 +40,28 @@ export const zhHans: MessageTree = {
     openWorkspace: "切换到工作区布局",
     themePrefix: "主题：",
     languagePrefix: "语言：",
+    quickOpen: "文件：快速打开",
+    changeWorkspace: "工作区：更改文件夹",
+    showCommands: "显示命令面板",
+  },
+  quickOpen: {
+    label: "转到文件",
+    placeholder: "按文件名或路径搜索…",
+    hint: "↑↓ 选择 · Enter 打开 · Esc 关闭",
+    typeToSearch: "输入以搜索工作区内的文件",
+    empty: "没有匹配的文件",
+  },
+  status: {
+    noFile: "未打开文件",
+    terminalActive: "终端已聚焦",
+    splitHorizontal: "左右",
+    splitVertical: "上下",
+    layout: "分屏 {pct}% · {axis}",
+    layoutTitle: "分屏比例与方向",
+    changeWorkspaceTitle: "点击更改工作区文件夹",
+  },
+  workspace: {
+    changePrompt: "工作区文件夹路径：",
   },
   a11y: {
     workspaceTabs: "工作区标签",
@@ -76,6 +98,8 @@ export const zhHans: MessageTree = {
     shortcutSave: "保存文件",
     shortcutFiles: "侧栏浏览项目",
     shortcutSplit: "拖动分屏条调整左右区域大小",
+    shortcutPalette: "命令面板",
+    shortcutQuickOpen: "快速打开 — 转到文件",
   },
   terminal: {
     idlePrompt: "字形终端",

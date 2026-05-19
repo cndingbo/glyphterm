@@ -18,10 +18,20 @@ import {
   type Locale,
 } from "../i18n";
 import {
+  openCommandPalette,
   registerPaletteCommands,
   refreshPaletteHint,
   type PaletteCommand,
 } from "../ui/command-palette";
+import {
+  openQuickOpen,
+  refreshQuickOpenUi,
+  setQuickOpenHandler,
+} from "../ui/quick-open";
+import {
+  createWorkspaceStatusBar,
+  type WorkspaceStatusBar,
+} from "../ui/status-bar";
 import { attachSplitResizer } from "../workspace/split-resize";
 import {
   getTheme,
@@ -84,12 +94,17 @@ export async function bootWorkspace() {
   const sideContent = document.getElementById("side-panel-content")!;
   const rail = document.getElementById("activity-rail")!;
   const workspacePathEl = document.getElementById("workspace-path")!;
+  const statusBarEl = document.getElementById("workspace-statusbar")!;
+  let statusBar: WorkspaceStatusBar | null = null;
+  let workspaceRootPath = "";
   const themeSelect = document.getElementById(
     "theme-select-ws",
   ) as HTMLSelectElement | null;
 
   initThemePicker(themeSelect);
   renderActivityRail();
+  statusBar = createWorkspaceStatusBar(statusBarEl, () => void changeWorkspaceFolder());
+  setQuickOpenHandler((path) => openFileInEditor(path));
   await initWorkspaceRoot();
 
   document.getElementById("btn-ws-tab-add")?.addEventListener("click", () => {
@@ -145,6 +160,8 @@ export async function bootWorkspace() {
     if (splitBtn) splitBtn.title = t("actions.resetSplit");
     syncWorkspacePalette();
     refreshPaletteHint();
+    refreshQuickOpenUi();
+    statusBar?.refreshLabels();
   });
 
   window.addEventListener("resize", () => {
@@ -167,6 +184,41 @@ export async function bootWorkspace() {
     renderWorkspaceTabs();
     renderStage();
     renderSidePanel();
+    syncStatusBar();
+  }
+
+  function syncStatusBar() {
+    if (!statusBar) return;
+    const tab = activeTab(state);
+    const activePane = tab.layout.panes.find((p) => p.id === tab.activePaneId);
+    let activeFile: string | undefined;
+    if (activePane?.block.kind === "editor" && activePane.block.filePath) {
+      activeFile = activePane.block.filePath;
+    }
+    statusBar.sync({
+      workspaceRoot: workspaceRootPath,
+      activeFile,
+      splitPct: tab.layout.split,
+      splitDirection: tab.layout.direction,
+      activePaneKind:
+        activePane?.block.kind === "terminal" ? "terminal" : "editor",
+    });
+  }
+
+  async function changeWorkspaceFolder() {
+    const next = prompt(t("workspace.changePrompt"), workspaceRootPath);
+    if (!next?.trim()) return;
+    try {
+      const root = await setWorkspaceRoot(next.trim());
+      workspaceRootPath = root;
+      workspacePathEl.textContent = root;
+      workspacePathEl.title = root;
+      state.activity = "files";
+      state.sidePanelOpen = true;
+      persistAndRender();
+    } catch (e) {
+      alert(String(e));
+    }
   }
 
   function populateThemePicker(sel: HTMLSelectElement | null) {
@@ -202,8 +254,10 @@ export async function bootWorkspace() {
       } catch {
         /* keep home */
       }
+      workspaceRootPath = root;
       workspacePathEl.textContent = root;
       workspacePathEl.title = root;
+      syncStatusBar();
     } catch {
       workspacePathEl.textContent = "—";
     }
@@ -277,6 +331,7 @@ export async function bootWorkspace() {
         stage.querySelectorAll(".ws-pane").forEach((p) => {
           p.classList.toggle("active", p === paneEl);
         });
+        syncStatusBar();
       }
     });
 
@@ -472,6 +527,7 @@ export async function bootWorkspace() {
         );
       });
       saveWorkspaceState(state);
+      syncStatusBar();
       return;
     }
     persistAndRender();
@@ -558,6 +614,24 @@ export async function bootWorkspace() {
     }));
 
     registerPaletteCommands([
+      {
+        id: "quick-open",
+        title: t("palette.quickOpen"),
+        keywords: "file go open search",
+        run: () => openQuickOpen(),
+      },
+      {
+        id: "change-workspace",
+        title: t("palette.changeWorkspace"),
+        keywords: "folder root project workspace",
+        run: () => void changeWorkspaceFolder(),
+      },
+      {
+        id: "palette",
+        title: t("palette.showCommands"),
+        keywords: "command palette",
+        run: () => openCommandPalette(),
+      },
       {
         id: "files",
         title: t("palette.toggleFiles"),

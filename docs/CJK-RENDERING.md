@@ -1,8 +1,8 @@
 # CJK 与多语言渲染规范
 
-本文档是 GlyphTerm 相对 Wave 等终端的 **核心差异化契约**。所有贡献者修改网格、光标、选区、滚动时必须遵守。
+本文档定义 GlyphTerm 的 **文本渲染契约**。所有贡献者修改网格、光标、选区、滚动时必须遵守。
 
-## 1. 问题本质（你在 Wave 里看到的「乱码」）
+## 1. 常见问题与根因
 
 常见现象：
 
@@ -10,11 +10,11 @@
 - 光标位置与文字不对齐
 - 一行里同时有中文、Emoji、颜色时整行错位
 
-根因通常 **不是** shell 或 `locale` 错了（`LANG=en_US.UTF-8` 仍可能乱），而是：
+根因通常 **不是** shell 或 `locale` 配置错误（`LANG=en_US.UTF-8` 仍可能出现显示问题），而是：
 
 1. **列宽算错**：把宽字符当 1 列，或 Ambiguous 字符宽度与渲染不一致  
 2. **字体无字形**：等宽字体缺 CJK，回退链未配置  
-3. **UI 层重复计量**：后端认为 2 列，前端 canvas 按 1 列画  
+3. **分层重复计量**：核心层与 UI 层对列宽理解不一致  
 
 GlyphTerm 规定：**只有 `glyphwidth` 可以决定列数**。
 
@@ -24,7 +24,7 @@ GlyphTerm 规定：**只有 `glyphwidth` 可以决定列数**。
 |------|----------|------|
 | `W` / `F` | 2 | CJK 表意文字等 |
 | `Na` / `H` | 1 | 半角、窄形式 |
-| `A` (Ambiguous) | **可配置** | 希腊字母、部分符号；默认 **1**（与 WezTerm 一致，避免西方环境错位） |
+| `A` (Ambiguous) | **可配置** | 希腊字母、部分符号；默认 **1** 列 |
 | `N` | 1 | 中性 |
 | Emoji (RI/ZWJ 序列) | 2（可配置） | 遵循 Unicode 15+ emoji 宽度表 |
 
@@ -68,7 +68,7 @@ brew install --cask font-sarasa-gothic
 
 终端内 UTF-8 字节 **永不** 转 GBK/GB2312；若用户需要 legacy 编码，由 shell 工具自行处理。
 
-## 6. 与 Wave 的对照测试
+## 6. 黄金测试
 
 维护 `tests/golden/mixed_line.txt` 等用例，包含：
 
@@ -77,13 +77,3 @@ brew install --cask font-sarasa-gothic
 ```
 
 期望列宽可机器校验；CI 在 Linux/macOS/Windows 三平台跑 `cargo test`。
-
-## 7. 用户临时规避（迁移期）
-
-在 GlyphTerm 未安装前，Wave 用户可：
-
-- 换 **Sarasa Mono SC** 等等宽 CJK 字体  
-- 升级 Wave 到最新版并开启 East Asian wide 相关选项  
-- 尽量避免同一行混用框线字符与 CJK（减轻终端 bug）
-
-长期方案仍是使用按本规范实现的终端核心。

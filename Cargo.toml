@@ -3,8 +3,14 @@ resolver = "2"
 members = [
     "crates/glyphwidth",
     "crates/glyphgrid",
+    "crates/glyphvt",
+    "apps/glyphterm-cli",
 ]
-default-members = ["crates/glyphwidth", "crates/glyphgrid"]
+default-members = [
+    "crates/glyphwidth",
+    "crates/glyphgrid",
+    "crates/glyphvt",
+]
 
 [workspace.package]
 version = "0.1.0"

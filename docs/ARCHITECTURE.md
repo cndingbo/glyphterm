@@ -4,8 +4,8 @@
 
 1. **正确性优先**：终端网格上每一个码点的列宽必须符合 [UAX #11](https://www.unicode.org/reports/tr11/) 与项目策略，并通过可回归的黄金测试。
 2. **本地优先**：会话、历史、密钥材料默认留在用户机器；AI 与云功能可插拔、可关闭。
-3. **块化工作区**：终端不是单窗口，而是可组合的 Block（对标 Wave 的 Block System）。
-4. **跨平台**：macOS / Linux / Windows 同一套核心 Rust 库，UI 用 Tauri 降低 Electron 体积与 CJK 字体栈差异。
+3. **块化工作区**：终端不是单窗口，而是可组合的 Block（终端、编辑、预览、网页等块可自由排布）。
+4. **跨平台**：macOS / Linux / Windows 共用同一套 Rust 核心库；UI 采用 Tauri，便于统一字体与渲染行为。
 
 ## 2. 逻辑分层
 
@@ -59,11 +59,12 @@ flowchart TB
 - 光标、选区、滚动、换行均以 **列** 为单位
 - API：`insert_grapheme`, `resize(cols, rows)`, `line_wrap`
 
-### 2.3 VT 解析器
+### 2.3 glyphvt（VT 解析器）
 
-- 状态机：CSI / OSC / ESC，兼容 xterm 常用子集
-- 与 grid 解耦：解析器只发 `TerminalAction` 枚举
-- Bracketed paste、鼠标、256/true color 分阶段实现
+-  crate：`crates/glyphvt`，状态机：CSI / ESC，兼容主流 VT 转义子集
+- 与 grid 解耦：解析器输出 `Action` 枚举，由 `apply()` 写入网格
+- 已实现：光标定位 (CUP)、擦除 (EL/ED)、基础 SGR 颜色
+- 待实现：OSC、Bracketed paste、鼠标、256/true color
 
 ### 2.4 Host 服务
 
@@ -85,18 +86,11 @@ flowchart TB
 | `web` | WebView2 / WKWebView |
 | `ai` | OpenAI-compatible API |
 
-## 3. 为何不用 xterm.js 做 CJK 核心
+## 3. 渲染策略
 
-xterm.js 在生态上成熟，但：
-
-- 宽度逻辑在 JS，与原生字体度量、Electron 字体回退容易 **双重不一致**
-- Wave 类混排场景（同屏 CJK + Emoji + 框线 + ANSI）会触发边界 bug
-
-GlyphTerm 策略：
-
-- **Phase 1**：Rust grid + 平台原生文本绘制（macOS Core Text / 跨平台 fontdue）
-- **Phase 2**：GPU 字形图集，统一度量
-- 可选 **兼容模式**：嵌入 xterm 仅作过渡，不作为长期核心
+- **Phase 1**：Rust 网格 + 平台原生文本绘制（macOS Core Text / 跨平台 fontdue）
+- **Phase 2**：GPU 字形图集，统一度量与回退
+- 列宽、字素簇、宽字符续格均在核心层完成，避免 UI 与核心各算一套宽度
 
 ## 4. 数据流（单终端块）
 

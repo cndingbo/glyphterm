@@ -1,0 +1,20 @@
+[package]
+name = "glyphterm-cli"
+description = "GlyphTerm local terminal (development CLI)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[[bin]]
+name = "glyphterm"
+path = "src/main.rs"
+
+[dependencies]
+glyphgrid = { path = "../../crates/glyphgrid" }
+glyphvt = { path = "../../crates/glyphvt" }
+glyphwidth = { path = "../../crates/glyphwidth" }
+portable-pty = "0.8"
+anyhow = "1.0"
+crossterm = "0.28"

@@ -1,0 +1,14 @@
+[package]
+name = "glyphvt"
+description = "VT100/xterm subset parser for GlyphTerm"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+glyphgrid = { path = "../glyphgrid" }
+
+[dev-dependencies]
+glyphwidth = { path = "../glyphwidth" }

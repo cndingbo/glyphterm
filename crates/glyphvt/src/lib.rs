@@ -130,7 +130,7 @@ fn apply_csi(grid: &mut Grid, raw: &[u8]) {
         }
         b'J' => match args.first().copied().unwrap_or(0) {
             0 => grid.erase_display_from_cursor(),
-            2 => grid.clear_screen(),
+            2 => grid.clear_all(),
             _ => {}
         },
         b'K' => match args.first().copied().unwrap_or(0) {

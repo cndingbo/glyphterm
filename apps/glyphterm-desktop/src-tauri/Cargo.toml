@@ -1,0 +1,22 @@
+[package]
+name = "glyphterm-desktop"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+description = "GlyphTerm desktop application (Tauri)"
+
+[lib]
+name = "glyphterm_desktop_lib"
+crate-type = ["lib", "cdylib", "staticlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+glyphterm-core = { path = "../../../crates/glyphterm-core" }
+parking_lot = "0.12"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tauri = { version = "2", features = [] }

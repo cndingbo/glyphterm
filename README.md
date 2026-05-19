@@ -70,6 +70,11 @@ cargo test --workspace
 # 本地终端（PTY + 网格渲染，开发用 CLI）
 cargo run -p glyphterm-cli
 # 退出：Ctrl+C
+
+# 桌面应用（Tauri 2，推荐）
+cd apps/glyphterm-desktop
+npm install
+npm run tauri dev
 ```
 
 ### 仓库结构（当前）
@@ -79,7 +84,9 @@ cargo run -p glyphterm-cli
 | `crates/glyphwidth` | Unicode 列宽引擎 + 黄金测试 |
 | `crates/glyphgrid` | 终端单元格网格（宽字符、换行、擦除） |
 | `crates/glyphvt` | VT/xterm 子集解析器 |
-| `apps/glyphterm-cli` | 可运行的本地 shell 终端（M1） |
+| `crates/glyphterm-core` | PTY 会话与 UI 帧序列化 |
+| `apps/glyphterm-cli` | 终端 CLI（crossterm） |
+| `apps/glyphterm-desktop` | **Tauri 2 桌面应用（M2）** |
 
 ## 许可证
 
@@ -88,9 +95,10 @@ cargo run -p glyphterm-cli
 ## 路线图
 
 1. **M0** — `glyphwidth` + 黄金测试集 ✅  
-2. **M1** — `glyphgrid` + `glyphvt` + `glyphterm-cli`（本地 PTY）✅  
-3. **M2** — Tauri 桌面宿主 + GPU/原生渲染  
-4. **M3** — 分屏 / Tab / SSH  
-5. **M4** — 文件预览、远程编辑、AI 块  
+2. **M1** — `glyphgrid` + `glyphvt` + `glyphterm-cli` ✅  
+3. **M2** — Tauri 桌面应用 + `glyphterm-core` + 滚动缓冲区 ✅  
+4. **M2.1** — GPU 渲染、选区、256 色、字体自动检测  
+5. **M3** — 分屏 / Tab / SSH  
+6. **M4** — 文件预览、远程编辑、AI 块  
 
 详见 [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) 与 [docs/CJK-RENDERING.md](./docs/CJK-RENDERING.md)。

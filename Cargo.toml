@@ -4,12 +4,15 @@ members = [
     "crates/glyphwidth",
     "crates/glyphgrid",
     "crates/glyphvt",
+    "crates/glyphterm-core",
     "apps/glyphterm-cli",
+    "apps/glyphterm-desktop/src-tauri",
 ]
 default-members = [
     "crates/glyphwidth",
     "crates/glyphgrid",
     "crates/glyphvt",
+    "crates/glyphterm-core",
 ]
 
 [workspace.package]

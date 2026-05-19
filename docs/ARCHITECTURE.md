@@ -17,7 +17,7 @@ flowchart TB
     I18n[UI i18n: fluent / json]
   end
 
-  subgraph Host["glyphterm-host"]
+  subgraph Host["glyphterm-core / host"]
     RPC[gRPC / IPC]
     SSH[SSH Session Pool]
     FS[Virtual FS / SFTP]

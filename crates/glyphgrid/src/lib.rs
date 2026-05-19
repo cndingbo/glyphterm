@@ -33,10 +33,22 @@ pub struct Grid {
     pub bold: bool,
     /// When true, writing past the last column wraps to the next row.
     pub auto_wrap: bool,
+    /// Scrolled-off lines (each line is `cols` cells).
+    scrollback: Vec<Vec<Cell>>,
+    scrollback_limit: usize,
 }
 
 impl Grid {
     pub fn new(cols: u16, rows: u16, policy: WidthPolicy) -> Self {
+        Self::with_scrollback(cols, rows, policy, 10_000)
+    }
+
+    pub fn with_scrollback(
+        cols: u16,
+        rows: u16,
+        policy: WidthPolicy,
+        scrollback_limit: usize,
+    ) -> Self {
         let len = cols as usize * rows as usize;
         Self {
             cols,
@@ -48,7 +60,13 @@ impl Grid {
             bg: DEFAULT_BG,
             bold: false,
             auto_wrap: true,
+            scrollback: Vec::new(),
+            scrollback_limit,
         }
+    }
+
+    pub fn scrollback_len(&self) -> usize {
+        self.scrollback.len()
     }
 
     pub fn policy(&self) -> WidthPolicy {
@@ -183,8 +201,42 @@ impl Grid {
     pub fn line_feed(&mut self) {
         if self.cursor.row + 1 < self.rows {
             self.cursor.row += 1;
+        } else {
+            self.scroll_up_one();
         }
         self.cursor.col = 0;
+    }
+
+    fn scroll_up_one(&mut self) {
+        let cols = self.cols as usize;
+        let mut line = Vec::with_capacity(cols);
+        for c in 0..self.cols {
+            line.push(
+                self.cell(c, 0)
+                    .copied()
+                    .unwrap_or(Cell {
+                        ch: ' ',
+                        ..Cell::default()
+                    }),
+            );
+        }
+        self.scrollback.push(line);
+        if self.scrollback.len() > self.scrollback_limit {
+            let drop = self.scrollback.len() - self.scrollback_limit;
+            self.scrollback.drain(0..drop);
+        }
+
+        for r in 1..self.rows {
+            for c in 0..self.cols {
+                if let (Some(dst), Some(src)) = (self.index(c, r - 1), self.index(c, r)) {
+                    self.cells[dst] = self.cells[src];
+                }
+            }
+        }
+        let last = self.rows.saturating_sub(1);
+        for c in 0..self.cols {
+            self.clear_cell(c, last);
+        }
     }
 
     pub fn carriage_return(&mut self) {
@@ -242,6 +294,16 @@ impl Grid {
     pub fn clear_screen(&mut self) {
         self.cells.fill(Cell::default());
         self.cursor = Cursor::default();
+    }
+
+    pub fn clear_all(&mut self) {
+        self.clear_screen();
+        self.scrollback.clear();
+    }
+
+    /// Iterate visible cells row-major (includes wide continuation slots).
+    pub fn iter_cells(&self) -> impl Iterator<Item = &Cell> {
+        self.cells.iter()
     }
 
     pub fn resize(&mut self, cols: u16, rows: u16) {
@@ -329,5 +391,15 @@ mod tests {
         g.resize(20, 5);
         assert_eq!(g.cell(0, 0).unwrap().ch, 'A');
         assert_eq!(g.cell(1, 0).unwrap().ch, 'B');
+    }
+
+    #[test]
+    fn scrollback_on_last_line_feed() {
+        let mut g = Grid::new(4, 2, WidthPolicy::default());
+        g.write_str("AB\n");
+        g.write_str("CD\n");
+        g.write_str("EF\n");
+        assert_eq!(g.scrollback_len(), 2);
+        assert_eq!(g.cell(0, 0).unwrap().ch, 'E');
     }
 }

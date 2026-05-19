@@ -12,9 +12,6 @@ name = "glyphterm"
 path = "src/main.rs"
 
 [dependencies]
-glyphgrid = { path = "../../crates/glyphgrid" }
-glyphvt = { path = "../../crates/glyphvt" }
-glyphwidth = { path = "../../crates/glyphwidth" }
-portable-pty = "0.8"
+glyphterm-core = { path = "../../crates/glyphterm-core" }
 anyhow = "1.0"
 crossterm = "0.28"

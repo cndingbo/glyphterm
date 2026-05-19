@@ -1,0 +1,62 @@
+:root {
+  --bg: #08090b;
+  --fg: #f5f3ee;
+  --accent: #6ee7d1;
+  --titlebar: #0c0e12;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: system-ui, sans-serif;
+  overflow: hidden;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.titlebar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  background: var(--titlebar);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  user-select: none;
+  -webkit-app-region: drag;
+}
+
+.titlebar .logo {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.titlebar .hint {
+  font-size: 12px;
+  opacity: 0.5;
+}
+
+#terminal-wrap {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+#terminal {
+  display: block;
+  width: 100%;
+  height: 100%;
+  outline: none;
+  cursor: text;
+}

@@ -1,0 +1,17 @@
+[package]
+name = "glyphterm-core"
+description = "PTY terminal session orchestration for GlyphTerm"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+anyhow = "1.0"
+glyphgrid = { path = "../glyphgrid" }
+glyphvt = { path = "../glyphvt" }
+glyphwidth = { path = "../glyphwidth" }
+parking_lot = "0.12"
+portable-pty = "0.8"
+serde = { version = "1.0", features = ["derive"] }

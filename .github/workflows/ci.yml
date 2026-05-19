@@ -21,7 +21,7 @@ jobs:
         with:
           toolchain: "1.78"
       - uses: Swatinem/rust-cache@v2
-      - name: Test workspace
-        run: cargo test --workspace --all-targets
-      - name: Check CLI builds
+      - name: Test core crates
+        run: cargo test -p glyphwidth -p glyphgrid -p glyphvt -p glyphterm-core -p glyphterm-cli
+      - name: Build CLI (release)
         run: cargo build -p glyphterm-cli --release

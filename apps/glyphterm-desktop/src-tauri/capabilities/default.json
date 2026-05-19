@@ -3,5 +3,9 @@
   "identifier": "default",
   "description": "Default capabilities for GlyphTerm",
   "windows": ["main"],
-  "permissions": ["core:default", "core:event:default"]
+  "permissions": [
+    "core:default",
+    "core:event:default",
+    "dialog:default"
+  ]
 }

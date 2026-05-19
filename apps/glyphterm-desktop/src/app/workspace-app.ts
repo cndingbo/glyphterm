@@ -9,6 +9,9 @@ import {
   setWorkspaceRoot,
   writeText,
 } from "../fs/client";
+import { pickWorkspaceFolder } from "../fs/workspace-dialog";
+import { problemCounts, subscribeDiagnostics } from "../editor/diagnostics";
+import { languageLabelForPath } from "../editor/language-service";
 import { applyMonacoThemeFromApp } from "../editor/monaco-theme";
 import {
   onLocaleChange,
@@ -28,10 +31,21 @@ import {
   refreshQuickOpenUi,
   setQuickOpenHandler,
 } from "../ui/quick-open";
+import { createBottomPanel, type BottomPanelController } from "../ui/bottom-panel";
+import { appendOutput, bootstrapOutputLog } from "../ui/output-log";
 import {
   createWorkspaceStatusBar,
   type WorkspaceStatusBar,
 } from "../ui/status-bar";
+import {
+  loadBottomPanelState,
+  saveBottomPanelState,
+  type BottomPanelState,
+} from "../workspace/bottom-panel";
+import {
+  recordRecentFile,
+  recordRecentWorkspace,
+} from "../workspace/recent-files";
 import { attachSplitResizer } from "../workspace/split-resize";
 import {
   getTheme,
@@ -95,7 +109,10 @@ export async function bootWorkspace() {
   const rail = document.getElementById("activity-rail")!;
   const workspacePathEl = document.getElementById("workspace-path")!;
   const statusBarEl = document.getElementById("workspace-statusbar")!;
+  const bottomPanelEl = document.getElementById("workspace-bottom-panel")!;
   let statusBar: WorkspaceStatusBar | null = null;
+  let bottomPanel: BottomPanelController | null = null;
+  let bottomPanelState: BottomPanelState = loadBottomPanelState();
   let workspaceRootPath = "";
   const themeSelect = document.getElementById(
     "theme-select-ws",
@@ -103,7 +120,29 @@ export async function bootWorkspace() {
 
   initThemePicker(themeSelect);
   renderActivityRail();
-  statusBar = createWorkspaceStatusBar(statusBarEl, () => void changeWorkspaceFolder());
+  bootstrapOutputLog();
+  statusBar = createWorkspaceStatusBar(statusBarEl, {
+    onWorkspaceClick: () => void changeWorkspaceFolder(),
+    onProblemsClick: () => bottomPanel?.toggle("problems"),
+    onOutputClick: () => bottomPanel?.toggle("output"),
+  });
+  bottomPanel = createBottomPanel(bottomPanelEl, {
+    onOpenFile: (path, line) => void openFileInEditor(path, line),
+    onStateChange: (s) => {
+      bottomPanelState = s;
+      saveBottomPanelState(s);
+      syncStatusBar();
+    },
+    onResizeHeight: (h) => {
+      bottomPanelState.height = h;
+      saveBottomPanelState(bottomPanelState);
+    },
+  });
+  bottomPanel.sync(bottomPanelState);
+  subscribeDiagnostics(() => {
+    syncStatusBar();
+    bottomPanel?.refresh();
+  });
   setQuickOpenHandler((path) => openFileInEditor(path));
   await initWorkspaceRoot();
 
@@ -162,6 +201,7 @@ export async function bootWorkspace() {
     refreshPaletteHint();
     refreshQuickOpenUi();
     statusBar?.refreshLabels();
+    bottomPanel?.refresh();
   });
 
   window.addEventListener("resize", () => {
@@ -195,6 +235,7 @@ export async function bootWorkspace() {
     if (activePane?.block.kind === "editor" && activePane.block.filePath) {
       activeFile = activePane.block.filePath;
     }
+    const counts = problemCounts();
     statusBar.sync({
       workspaceRoot: workspaceRootPath,
       activeFile,
@@ -202,20 +243,36 @@ export async function bootWorkspace() {
       splitDirection: tab.layout.direction,
       activePaneKind:
         activePane?.block.kind === "terminal" ? "terminal" : "editor",
+      languageLabel:
+        activePane?.block.kind === "editor"
+          ? languageLabelForPath(activePane.block.filePath)
+          : undefined,
+      problemErrors: counts.errors,
+      problemWarnings: counts.warnings,
+      bottomPanelOpen: bottomPanelState.open,
+      bottomPanelView: bottomPanelState.view,
     });
   }
 
+  async function applyWorkspaceRoot(root: string) {
+    workspaceRootPath = root;
+    recordRecentWorkspace(root);
+    workspacePathEl.textContent = root;
+    workspacePathEl.title = root;
+    appendOutput("GlyphTerm", t("output.workspaceChanged", { path: root }), {
+      newline: true,
+    });
+    state.activity = "files";
+    state.sidePanelOpen = true;
+    persistAndRender();
+  }
+
   async function changeWorkspaceFolder() {
-    const next = prompt(t("workspace.changePrompt"), workspaceRootPath);
-    if (!next?.trim()) return;
+    const picked = await pickWorkspaceFolder(workspaceRootPath);
+    if (!picked) return;
     try {
-      const root = await setWorkspaceRoot(next.trim());
-      workspaceRootPath = root;
-      workspacePathEl.textContent = root;
-      workspacePathEl.title = root;
-      state.activity = "files";
-      state.sidePanelOpen = true;
-      persistAndRender();
+      const root = await setWorkspaceRoot(picked);
+      await applyWorkspaceRoot(root);
     } catch (e) {
       alert(String(e));
     }
@@ -255,6 +312,7 @@ export async function bootWorkspace() {
         /* keep home */
       }
       workspaceRootPath = root;
+      recordRecentWorkspace(root);
       workspacePathEl.textContent = root;
       workspacePathEl.title = root;
       syncStatusBar();
@@ -497,7 +555,7 @@ export async function bootWorkspace() {
     await loadDir(root, 0);
   }
 
-  async function openFileInEditor(path: string) {
+  async function openFileInEditor(path: string, line?: number) {
     const tab = activeTab(state);
     const pane =
       tab.layout.panes.find((p) => p.block.kind === "editor") ??
@@ -510,6 +568,7 @@ export async function bootWorkspace() {
       title: fileName(path),
     };
     tab.activePaneId = pane.id;
+    recordRecentFile(path);
 
     const rt = paneRuntimes.get(pane.id);
     if (rt?.editor) {
@@ -517,6 +576,7 @@ export async function bootWorkspace() {
       try {
         const text = await readText(path);
         await rt.editor.openFile(path, text);
+        if (line) rt.editor.revealLine(line);
       } catch (e) {
         await rt.editor.openFile(path, t("errors.readFile", { error: String(e) }));
       }
@@ -623,8 +683,20 @@ export async function bootWorkspace() {
       {
         id: "change-workspace",
         title: t("palette.changeWorkspace"),
-        keywords: "folder root project workspace",
+        keywords: "folder root project workspace open",
         run: () => void changeWorkspaceFolder(),
+      },
+      {
+        id: "toggle-problems",
+        title: t("palette.toggleProblems"),
+        keywords: "diagnostics errors warnings",
+        run: () => bottomPanel?.toggle("problems"),
+      },
+      {
+        id: "toggle-output",
+        title: t("palette.toggleOutput"),
+        keywords: "log console output",
+        run: () => bottomPanel?.toggle("output"),
       },
       {
         id: "palette",

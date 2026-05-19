@@ -97,6 +97,14 @@
   min-height: 0;
 }
 
+.workspace-center {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
 /* Activity rail — VS Code–style indicator */
 .activity-rail {
   width: var(--rail-width, 56px);
@@ -724,4 +732,211 @@ body.ws-split-dragging-row {
 .status-layout {
   color: var(--text-muted);
   flex-shrink: 0;
+}
+
+.status-problems,
+.status-output {
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: inherit;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition:
+    color var(--duration-fast),
+    background var(--duration-fast);
+}
+
+.status-problems:hover,
+.status-output:hover,
+.status-problems.active,
+.status-output.active {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.status-problems {
+  color: color-mix(in srgb, #f85149 80%, var(--text-muted));
+}
+
+.status-language {
+  color: var(--text-subtle);
+  flex-shrink: 0;
+}
+
+/* Bottom panel (Problems / Output) */
+.workspace-bottom-panel {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  min-height: 0;
+}
+
+.bottom-panel-gutter {
+  flex-shrink: 0;
+  height: 5px;
+  cursor: row-resize;
+  position: relative;
+}
+
+.bottom-panel-gutter::after {
+  content: "";
+  position: absolute;
+  left: 20%;
+  right: 20%;
+  top: 2px;
+  height: 1px;
+  background: color-mix(in srgb, var(--fg) 10%, transparent);
+  transition: background var(--duration-fast);
+}
+
+.bottom-panel-gutter:hover::after {
+  background: var(--accent-muted);
+}
+
+body.bottom-panel-dragging {
+  user-select: none;
+  cursor: row-resize;
+}
+
+.bottom-panel-tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 8px;
+  height: 32px;
+  background: color-mix(in srgb, var(--fg) 3%, var(--surface));
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.bottom-tab {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border: none;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition:
+    color var(--duration-fast),
+    background var(--duration-fast);
+}
+
+.bottom-tab:hover {
+  color: var(--fg);
+}
+
+.bottom-tab.active {
+  color: var(--accent);
+  background: var(--surface-raised);
+  box-shadow: inset 0 1px 0 var(--accent-muted);
+}
+
+.bottom-panel-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 4px;
+}
+
+.bottom-tab-action {
+  width: 28px;
+  height: 24px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.bottom-tab-action:hover {
+  background: color-mix(in srgb, var(--fg) 8%, transparent);
+  color: var(--fg);
+}
+
+.bottom-panel-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  font-size: 12px;
+}
+
+.panel-empty {
+  padding: 24px 16px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.panel-empty-hint {
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--text-subtle);
+}
+
+.problems-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+}
+
+.problem-row {
+  display: grid;
+  grid-template-columns: 16px 1fr auto;
+  gap: 8px 12px;
+  align-items: center;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: background var(--duration-fast);
+}
+
+.problem-row:hover {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.problem-sev {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.problem-row.severity-error .problem-sev {
+  background: #f85149;
+}
+
+.problem-row.severity-warning .problem-sev {
+  background: #d29922;
+}
+
+.problem-row.severity-info .problem-sev {
+  background: var(--accent);
+}
+
+.problem-msg {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--fg);
+}
+
+.problem-loc {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-subtle);
+  white-space: nowrap;
+}
+
+.output-log {
+  margin: 0;
+  padding: 10px 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-muted);
+  white-space: pre-wrap;
+  word-break: break-word;
 }

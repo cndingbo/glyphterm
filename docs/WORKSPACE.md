@@ -12,12 +12,16 @@ GlyphTerm 工作区将终端、编辑器、侧栏组合为可扩展的 **Block**
 | 命令面板 ⌘K / Ctrl+K | ✅ |
 | 快速打开 ⌘P / Ctrl+P（工作区文件搜索） | ✅ |
 | 底部状态栏（工作区 / 当前文件 / 分屏） | ✅ |
+| 原生「打开文件夹」对话框 | ✅ |
+| Quick Open 最近文件列表 | ✅ |
+| 底部 Problems / Output 面板 | ✅ |
+| Monaco 诊断 → Problems（TS/JSON 等） | ✅ |
 | 活动栏：terminal / files / sysinfo / process | ✅（后两者占位） |
 | 文件树 + 点击打开 | ✅ |
 | **Monaco 编辑器**（VS Code 同源内核） | ✅ |
 | ⌘S 保存 | ✅ |
 | 经典单终端界面 | ✅（标题栏切换） |
-| LSP / AI 块 / 原生文件夹选择器 | 🔜 |
+| rust-analyzer LSP / AI 块 | 🔜 |
 
 ## 架构
 

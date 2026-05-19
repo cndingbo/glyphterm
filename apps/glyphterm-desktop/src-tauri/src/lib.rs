@@ -252,6 +252,7 @@ fn spawn_frame_loop(app: AppHandle) {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .manage(AppState {
             manager: Mutex::new(SessionManager::new()),
             workspace_root: Mutex::new(default_workspace_root()),

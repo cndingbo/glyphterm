@@ -104,8 +104,25 @@ export class MonacoPane {
     this.path = path;
     this.dirty = false;
     const lang = languageIdForPath(path);
-    const model = monaco.editor.createModel(content, lang);
+    const uri = monaco.Uri.file(path);
+    let model = monaco.editor.getModel(uri);
+    if (model) {
+      model.setValue(content);
+    } else {
+      model = monaco.editor.createModel(content, lang, uri);
+    }
     this.editor.setModel(model);
+  }
+
+  getEditor(): monaco.editor.IStandaloneCodeEditor | null {
+    return this.editor;
+  }
+
+  revealLine(line: number) {
+    if (!this.editor) return;
+    this.editor.revealLineInCenter(line);
+    this.editor.setPosition({ lineNumber: line, column: 1 });
+    this.editor.focus();
   }
 
   getValue(): string {

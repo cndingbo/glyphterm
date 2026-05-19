@@ -128,3 +128,13 @@
   color: var(--text-subtle);
   border-top: 1px solid var(--border);
 }
+
+.quick-open-section {
+  padding: 8px 12px 4px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-subtle);
+  pointer-events: none;
+}

@@ -1,6 +1,9 @@
 //! Terminal cell grid with wide-character (CJK) support.
 
+mod selection;
+
 use glyphwidth::{measure, ClusterWidth, WidthPolicy};
+pub use selection::{selection_text, Selection};
 
 /// Default foreground / background (24-bit RGB).
 pub const DEFAULT_FG: u32 = 0xF5F3EE;
@@ -36,6 +39,7 @@ pub struct Grid {
     /// Scrolled-off lines (each line is `cols` cells).
     scrollback: Vec<Vec<Cell>>,
     scrollback_limit: usize,
+    selection: Selection,
 }
 
 impl Grid {
@@ -62,7 +66,34 @@ impl Grid {
             auto_wrap: true,
             scrollback: Vec::new(),
             scrollback_limit,
+            selection: Selection::default(),
         }
+    }
+
+    pub fn cells(&self) -> &[Cell] {
+        &self.cells
+    }
+
+    pub fn selection(&self) -> &Selection {
+        &self.selection
+    }
+
+    pub fn selection_start(&mut self, col: u16, row: u16) {
+        self.selection = Selection::start(col, row);
+    }
+
+    pub fn selection_update(&mut self, col: u16, row: u16) {
+        if self.selection.active {
+            self.selection.update(col, row);
+        }
+    }
+
+    pub fn selection_clear(&mut self) {
+        self.selection = Selection::default();
+    }
+
+    pub fn selection_text(&self) -> String {
+        selection_text(self.cols, self.rows, &self.cells, &self.selection)
     }
 
     pub fn scrollback_len(&self) -> usize {
@@ -391,6 +422,15 @@ mod tests {
         g.resize(20, 5);
         assert_eq!(g.cell(0, 0).unwrap().ch, 'A');
         assert_eq!(g.cell(1, 0).unwrap().ch, 'B');
+    }
+
+    #[test]
+    fn selection_text_cjk() {
+        let mut g = Grid::new(20, 3, WidthPolicy::default());
+        g.write_str("中文");
+        g.selection_start(0, 0);
+        g.selection_update(3, 0); // 两个宽字符占 col 0–1、2–3
+        assert_eq!(g.selection_text(), "中文");
     }
 
     #[test]

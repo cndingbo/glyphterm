@@ -97,8 +97,9 @@ npm run tauri dev
 1. **M0** — `glyphwidth` + 黄金测试集 ✅  
 2. **M1** — `glyphgrid` + `glyphvt` + `glyphterm-cli` ✅  
 3. **M2** — Tauri 桌面应用 + `glyphterm-core` + 滚动缓冲区 ✅  
-4. **M2.1** — GPU 渲染、选区、256 色、字体自动检测  
-5. **M3** — 分屏 / Tab / SSH  
-6. **M4** — 文件预览、远程编辑、AI 块  
+4. **M2.1** — 256/真彩色、选区复制、字体提示 ✅  
+5. **M2.2** — GPU 渲染、性能优化  
+6. **M3** — 分屏 / Tab / SSH  
+7. **M4** — 文件预览、远程编辑、AI 块  
 
 详见 [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) 与 [docs/CJK-RENDERING.md](./docs/CJK-RENDERING.md)。

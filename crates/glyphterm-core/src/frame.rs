@@ -4,6 +4,15 @@ use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
+pub struct SelectionView {
+    pub start_col: u16,
+    pub start_row: u16,
+    pub end_col: u16,
+    pub end_row: u16,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Frame {
     pub cols: u16,
     pub rows: u16,
@@ -11,6 +20,8 @@ pub struct Frame {
     pub cursor_row: u16,
     pub scrollback_lines: usize,
     pub cells: Vec<CellView>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub selection: Option<SelectionView>,
 }
 
 #[derive(Debug, Clone, Serialize)]

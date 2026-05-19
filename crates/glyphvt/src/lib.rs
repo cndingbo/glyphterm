@@ -1,6 +1,9 @@
 //! VT100 / xterm subset parser — feeds [`glyphgrid::Grid`].
 
+mod sgr;
+
 use glyphgrid::Grid;
+use sgr::apply_sgr;
 
 /// Parsed terminal action.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -144,38 +147,6 @@ fn apply_csi(grid: &mut Grid, raw: &[u8]) {
     }
 }
 
-fn apply_sgr(grid: &mut Grid, args: &[u16]) {
-    let mut iter = args.iter().copied().peekable();
-    while let Some(code) = iter.next() {
-        match code {
-            0 => grid.set_pen(glyphgrid::DEFAULT_FG, glyphgrid::DEFAULT_BG, false),
-            1 => {
-                let fg = grid.fg;
-                let bg = grid.bg;
-                grid.set_pen(fg, bg, true);
-            }
-            30..=37 => {
-                let fg = ansi_color(code - 30);
-                grid.set_pen(fg, grid.bg, grid.bold);
-            }
-            39 => grid.set_pen(glyphgrid::DEFAULT_FG, grid.bg, grid.bold),
-            40..=47 => {
-                let bg = ansi_color(code - 40);
-                grid.set_pen(grid.fg, bg, grid.bold);
-            }
-            49 => grid.set_pen(grid.fg, glyphgrid::DEFAULT_BG, grid.bold),
-            _ => {}
-        }
-    }
-}
-
-fn ansi_color(idx: u16) -> u32 {
-    const PALETTE: [u32; 8] = [
-        0x000000, 0xCD3131, 0x0DBC79, 0xE5E510, 0x2472C8, 0xBC3FBC, 0x11A8CD, 0xE5E5E5,
-    ];
-    PALETTE.get(idx as usize).copied().unwrap_or(0xFFFFFF)
-}
-
 fn parse_csi_args(body: &[u8]) -> Vec<u16> {
     let s = std::str::from_utf8(body).unwrap_or("");
     if s.is_empty() {
@@ -215,5 +186,14 @@ mod tests {
         let actions = p.feed(b"hi\n");
         apply(&mut grid, &actions);
         assert_eq!(grid.cursor.row, 1);
+    }
+
+    #[test]
+    fn true_color_via_csi() {
+        let mut grid = Grid::new(80, 24, WidthPolicy::default());
+        let mut p = Parser::new();
+        let actions = p.feed(b"\x1b[38;2;255;100;50m");
+        apply(&mut grid, &actions);
+        assert_eq!(grid.fg, 0xFF6432);
     }
 }

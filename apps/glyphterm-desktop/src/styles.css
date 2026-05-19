@@ -46,6 +46,15 @@ body {
   opacity: 0.5;
 }
 
+.font-banner {
+  margin: 0;
+  padding: 6px 14px;
+  font-size: 12px;
+  background: rgba(110, 231, 209, 0.12);
+  color: var(--accent, #6ee7d1);
+  border-bottom: 1px solid rgba(110, 231, 209, 0.2);
+}
+
 #terminal-wrap {
   flex: 1;
   position: relative;

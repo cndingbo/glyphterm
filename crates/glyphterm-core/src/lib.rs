@@ -3,5 +3,5 @@
 mod frame;
 mod session;
 
-pub use frame::{CellView, Frame};
+pub use frame::{CellView, Frame, SelectionView};
 pub use session::TerminalSession;

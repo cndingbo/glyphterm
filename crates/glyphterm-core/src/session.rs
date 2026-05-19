@@ -1,6 +1,6 @@
 //! Local PTY session backed by [`glyphgrid`] + [`glyphvt`].
 
-use crate::frame::{CellView, Frame};
+use crate::frame::{CellView, Frame, SelectionView};
 use anyhow::{Context, Result};
 use glyphgrid::Grid;
 use glyphvt::{apply, Parser};
@@ -93,9 +93,30 @@ impl TerminalSession {
     }
 
     pub fn write_input(&mut self, data: &[u8]) -> Result<()> {
+        self.grid.selection_clear();
         self.writer.write_all(data).context("write pty")?;
         self.writer.flush().context("flush pty")?;
+        self.dirty = true;
         Ok(())
+    }
+
+    pub fn selection_start(&mut self, col: u16, row: u16) {
+        self.grid.selection_start(col, row);
+        self.dirty = true;
+    }
+
+    pub fn selection_update(&mut self, col: u16, row: u16) {
+        self.grid.selection_update(col, row);
+        self.dirty = true;
+    }
+
+    pub fn selection_clear(&mut self) {
+        self.grid.selection_clear();
+        self.dirty = true;
+    }
+
+    pub fn selection_copy_text(&self) -> String {
+        self.grid.selection_text()
     }
 
     pub fn resize(&mut self, cols: u16, rows: u16) -> Result<()> {
@@ -129,6 +150,21 @@ impl TerminalSession {
             })
             .collect();
 
+        let selection = {
+            let sel = self.grid.selection();
+            if sel.active {
+                let (c0, r0, c1, r1) = sel.bounds();
+                Some(SelectionView {
+                    start_col: c0,
+                    start_row: r0,
+                    end_col: c1,
+                    end_row: r1,
+                })
+            } else {
+                None
+            }
+        };
+
         Frame {
             cols: self.grid.cols,
             rows: self.grid.rows,
@@ -136,6 +172,7 @@ impl TerminalSession {
             cursor_row: self.grid.cursor.row,
             scrollback_lines: self.grid.scrollback_len(),
             cells,
+            selection,
         }
     }
 }
